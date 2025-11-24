@@ -3,6 +3,8 @@ import {configDotenv} from "dotenv";
 configDotenv()
 import cors from "cors";
 import shipmentRoutes from "./routes/shipmentRoutes.js";
+import productsRoutes from "./routes/prouductsRoutes.js";
+import warehousesRoutes from "./routes/warehousesRoutes.js";
 
 const app = express();
 
@@ -11,6 +13,8 @@ app.use(express.json());
 
 
 app.use("/shipments", shipmentRoutes);
+app.use("/products", productsRoutes)
+app.use("/warehouses", warehousesRoutes);
 
 app.get('/test', (req, res) => {
     res.send('boom boom express')

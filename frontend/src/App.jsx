@@ -7,6 +7,9 @@ import Home from "./pages/Home";
 import Footer from "./components/Footer";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
+import Products from "./pages/products/Products";
+import Warehouses from "./pages/warehouse/Warehouse";
+import LocationIntelligence from "./pages/intelligence/LocationIntelligence";
 
 export default function App() {
   return (
@@ -15,11 +18,13 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/products" element={<Products />} />
         <Route path="/shipments" element={<Shipments />} />
         <Route path="/automation" element={<Automation />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/analytics" element={<Analytics />} />
-
+        <Route path="/warehouse" element={<Warehouses />} />
+        <Route path="/intelligence" element={<LocationIntelligence />} />
       </Routes>
       <Footer />
     </BrowserRouter>
