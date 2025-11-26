@@ -1,7 +1,33 @@
+import { useLocation, Link } from "react-router-dom";
 import ProfileMenu from "./ProfileMenu";
-import { Menu } from "lucide-react"; // optional icon if you use lucide-react
+import { Menu, Sun, Plus } from "lucide-react";
+
+// Page Title Map
+const pageTitles = {
+  "/dashboard": "Dashboard",
+  "/shipments": "Shipments",
+  "/shopify-orders": "Shopify Orders",
+  "/inventory": "Inventory",
+  "/warehouses": "Warehouses",
+  "/products": "Products",
+  "/automation": "Automation",
+  "/analytics": "Analytics",
+  "/users": "Users",
+  "/billing": "Billing",
+  "/logs": "Logs",
+};
 
 export default function Topbar({ toggleSidebar }) {
+  const { pathname } = useLocation();
+
+  const pageTitle = pageTitles[pathname] || "ShipFlow";
+
+  // Breadcrumb generator
+  const breadcrumbs = pathname
+    .split("/")
+    .filter(Boolean)
+    .map((crumb) => crumb.charAt(0).toUpperCase() + crumb.slice(1));
+
   return (
     <header
       className="
@@ -14,9 +40,10 @@ export default function Topbar({ toggleSidebar }) {
         sticky top-0 z-50
       "
     >
-      {/* LEFT SECTION */}
+      {/* ================= LEFT ================= */}
       <div className="flex items-center gap-4">
-        {/* Sidebar Toggle - visible on mobile */}
+
+        {/* Sidebar Toggle (Mobile) */}
         <button
           onClick={toggleSidebar}
           className="md:hidden text-slate-300 hover:text-white transition"
@@ -24,26 +51,55 @@ export default function Topbar({ toggleSidebar }) {
           <Menu size={22} />
         </button>
 
+        {/* Title + Breadcrumbs */}
+        <div className="hidden sm:flex flex-col">
+          <h1 className="text-white font-semibold text-lg leading-tight">
+            {pageTitle}
+          </h1>
+          <div className="text-xs text-slate-400">
+            <Link to="/dashboard" className="hover:text-cyan-400">
+              Home
+            </Link>
+            {breadcrumbs.map((crumb, i) => (
+              <span key={i}> / {crumb}</span>
+            ))}
+          </div>
+        </div>
+
         {/* Search */}
-        <div className="hidden sm:block w-64">
+        <div className="hidden md:block ml-6 w-72">
           <input
             type="text"
-            placeholder="Search…"
+            placeholder={`Search in ${pageTitle}...`}
             className="
               w-full bg-slate-800/70 
               border border-slate-700 
               rounded-lg px-3 py-2 text-sm 
               text-slate-200
               placeholder-slate-400
-              focus:outline-none focus:border-cyan-500 
+              focus:outline-none 
+              focus:border-cyan-500 
               transition
             "
           />
         </div>
       </div>
 
-      {/* RIGHT SECTION */}
+      {/* ================= RIGHT ================= */}
       <div className="flex items-center gap-5 text-slate-300">
+
+        {/* Add New Quick Action */}
+        <button
+          className="
+            hidden md:flex items-center gap-2 
+            bg-cyan-600 text-white 
+            px-3 py-1.5 rounded-lg 
+            hover:bg-cyan-700 transition
+          "
+        >
+          <Plus size={16} />
+          <span className="text-sm font-medium">Add</span>
+        </button>
 
         {/* Notification Bell */}
         <button
@@ -64,8 +120,10 @@ export default function Topbar({ toggleSidebar }) {
           ></span>
         </button>
 
-        {/* Lightning Quick Actions */}
-        <button className="hover:text-white transition text-xl">⚡</button>
+        {/* Dark / Light (Future-ready) */}
+        <button className="hover:text-white transition">
+          <Sun size={18} />
+        </button>
 
         {/* Profile Menu */}
         <ProfileMenu />

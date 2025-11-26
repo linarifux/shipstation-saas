@@ -15,11 +15,8 @@ export default function Navbar() {
 
         {/* Desktop Links */}
         <div className="hidden md:flex items-center space-x-6">
-          <Link className="hover:text-blue-400" to="/dashboard">Dashboard</Link>
           <Link className="hover:text-blue-400" to="/shipments">Shipments</Link>
-          <Link className="hover:text-blue-400" to="/orders">Orders</Link>
           <Link className="hover:text-blue-400" to="/automation">Automation</Link>
-          <Link className="hover:text-blue-400" to="/settings">Settings</Link>
           <Link className="hover:text-blue-400" to="/warehouse">Warehouse</Link>
           <Link className="hover:text-blue-400" to="/products">Products</Link>
           <Link className="hover:text-blue-400" to="/intelligence">Intelligence</Link>

@@ -45,7 +45,7 @@ export default function Warehouses() {
     <div className="p-6 text-slate-100">
 
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold text-black">🏢 Warehouses</h1>
+        <h1 className="text-3xl font-semibold">🏢 Warehouses</h1>
 
         <button onClick={fetchWarehouses}
           className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg shadow">

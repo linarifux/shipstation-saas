@@ -5,13 +5,11 @@ export default function Sidebar({ collapsed, toggle }) {
   const { pathname } = useLocation();
 
   const menu = [
-    { label: "Dashboard", to: "/dashboard", icon: "📊" },
     { label: "Shipments", to: "/shipments", icon: "🚚" },
     { label: "Automation", to: "/automation", icon: "⚙️" },
-    { label: "Users", to: "/users", icon: "👥" },
-    { label: "Billing", to: "/billing", icon: "💳" },
-    { label: "Logs", to: "/logs", icon: "📝" },
     { label: "Analytics", to: "/analytics", icon: "📈" },
+    { label: "Shopify Orders", to: "/shopify-orders", icon: "🛒" },
+    { label: "Shopify Inventory", to: "/inventory", icon: "📦" },
   ];
 
   return (

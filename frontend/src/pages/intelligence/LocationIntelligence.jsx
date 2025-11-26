@@ -64,7 +64,7 @@ export default function LocationIntelligence() {
     return (
         <div className="p-6 text-slate-100">
 
-            <h1 className="text-3xl font-bold mb-6 text-black">
+            <h1 className="text-3xl font-bold mb-6">
                 📍 Warehouse Placement Intelligence
             </h1>
 

@@ -42,7 +42,7 @@ export default function Products() {
     <div className="p-6 text-slate-100">
 
       <div className="flex justify-between mb-6">
-        <h1 className="text-3xl font-semibold text-black">🛍 Products</h1>
+        <h1 className="text-3xl font-semibold">🛍 Products</h1>
 
         <button
           onClick={fetchProducts}
