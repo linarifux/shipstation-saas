@@ -13,6 +13,7 @@ import LocationIntelligence from "./pages/intelligence/LocationIntelligence";
 import ShopifyOrders from "./pages/shopify/ShopifyOrders";
 import ShopifyInventory from "./pages/shopify/ShopifyInventory";
 import DashboardLayout from "./components/layout/DashboardLayout";
+import MasterProducts from "./pages/masterProducts/MasterProducts";
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/intelligence" element={<LocationIntelligence />} />
           <Route path="/shopify-orders" element={<ShopifyOrders />} />
           <Route path="/inventory" element={<ShopifyInventory />} />
+          <Route path="/master-products" element={<MasterProducts />} />
         </Route>
       </Routes>
       <Footer />

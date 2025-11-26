@@ -10,6 +10,7 @@ export default function Sidebar({ collapsed, toggle }) {
     { label: "Analytics", to: "/analytics", icon: "📈" },
     { label: "Shopify Orders", to: "/shopify-orders", icon: "🛒" },
     { label: "Shopify Inventory", to: "/inventory", icon: "📦" },
+    { label: "Master Products", to: "/master-products", icon: "🧾" },
   ];
 
   return (

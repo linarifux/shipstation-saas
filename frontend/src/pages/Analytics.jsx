@@ -46,7 +46,7 @@ export default function Analytics() {
   const COLORS = ["#06b6d4", "#2563eb", "#10b981", "#fbbf24"];
 
   return (
-    <DashboardLayout>
+    <>
       <h1 className="text-2xl font-semibold mb-6">Analytics Overview</h1>
 
       {/* KPI Row */}
@@ -132,7 +132,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </ChartCard>
       </div>
-    </DashboardLayout>
+    </>
   );
 }
 
