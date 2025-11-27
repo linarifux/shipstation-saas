@@ -51,14 +51,20 @@ const masterProductSchema = new Schema(
     name: { type: String, required: true },
     brand: String,
     category: String,
+
     price: { type: Number, default: 0 },
+    unitCost: { type: Number, default: 0 },
+
+    trackInventory: { type: Boolean, default: true },
+
     variants: [variantSchema],
     channels: channelMapSchema,
 
     locations: [locationStockSchema],
   },
-  { timestamps: true, toJSON: { virtuals: true }  }
+  { timestamps: true, toJSON: { virtuals: true } }
 );
+
 
 // Convenience virtual: total available across locations
 masterProductSchema.virtual("totalAvailable").get(function () {

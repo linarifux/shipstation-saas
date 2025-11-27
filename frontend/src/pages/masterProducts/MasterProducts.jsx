@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { ChevronDown, ChevronRight, Edit3 } from "lucide-react";
+import { ChevronDown, ChevronRight, Edit3, PlusCircle } from "lucide-react";
 import { HashLoader } from "react-spinners";
-import AddProductModal from "../../components/products/AddProductModal";
+
+import AddStockModal from "./components/AddStockModal";
+import AddProductModal from "./components/AddProductModal";
 
 export default function MasterProducts() {
   const [products, setProducts] = useState([]);
@@ -10,6 +12,8 @@ export default function MasterProducts() {
   const [loading, setLoading] = useState(true);
   const [openAdd, setOpenAdd] = useState(false);
   const [error, setError] = useState("");
+  const [stockModalOpen, setStockModalOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   const fetchProducts = async () => {
     try {
@@ -17,7 +21,6 @@ export default function MasterProducts() {
       setError("");
 
       const res = await axios.get("http://localhost:5000/api/master-products");
-
       setProducts(res.data?.products || []);
     } catch (err) {
       console.log(err);
@@ -87,6 +90,7 @@ export default function MasterProducts() {
               <Th label="Channels" />
             </tr>
           </thead>
+
           <tbody>
             {products.map((p) => (
               <MasterProductRow
@@ -95,6 +99,10 @@ export default function MasterProducts() {
                 expanded={!!expanded[p._id]}
                 onToggle={() => toggleRow(p._id)}
                 onUpdated={fetchProducts}
+                onAddStock={(product) => {
+                  setSelectedProduct(product);
+                  setStockModalOpen(true);
+                }}
               />
             ))}
           </tbody>
@@ -113,6 +121,15 @@ export default function MasterProducts() {
         onClose={() => setOpenAdd(false)}
         onCreated={fetchProducts}
       />
+
+      {/* ✅ ADD STOCK MODAL */}
+      <AddStockModal
+        open={stockModalOpen}
+        onClose={() => setStockModalOpen(false)}
+        product={selectedProduct}
+        onUpdated={fetchProducts}
+      />
+
     </div>
   );
 }
@@ -127,7 +144,7 @@ function Th({ label }) {
   );
 }
 
-function MasterProductRow({ product, expanded, onToggle, onUpdated }) {
+function MasterProductRow({ product, expanded, onToggle, onUpdated, onAddStock }) {
   const totalAvailable =
     product.totalAvailable ??
     (product.locations || []).reduce((sum, l) => sum + (l.available || 0), 0);
@@ -142,23 +159,37 @@ function MasterProductRow({ product, expanded, onToggle, onUpdated }) {
   return (
     <>
       <tr className="border-t border-slate-800 hover:bg-slate-800/40">
+
+        {/* EXPAND */}
         <td className="p-3 w-8">
           <button onClick={onToggle} className="text-slate-300 hover:text-white">
             {expanded ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
           </button>
         </td>
 
+        {/* PRODUCT NAME + ADD STOCK */}
         <td className="p-3">
           <div className="font-medium">{product.name}</div>
-          <div className="text-xs text-slate-400">{product.brand}</div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddStock(product);
+            }}
+            className="flex items-center gap-1 mt-1 text-xs text-cyan-400 hover:text-cyan-300"
+          >
+            <PlusCircle size={14} /> Add stock
+          </button>
         </td>
 
+        {/* SKU */}
         <td className="p-3 font-mono text-xs">{product.masterSku}</td>
 
+        {/* TOTAL */}
         <td className="p-3 font-semibold text-cyan-400">
           {totalAvailable}
         </td>
 
+        {/* CHANNELS */}
         <td className="p-3">
           <div className="flex flex-wrap gap-2">
             {channelBadges.length === 0 && (

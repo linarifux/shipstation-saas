@@ -1,35 +1,45 @@
 export default function WarehouseRow({ warehouse, onClick }) {
+  const address = warehouse.address || {};
+
   return (
     <tr
       onClick={onClick}
-      className="border-t border-slate-800 hover:bg-slate-800/50 cursor-pointer"
+      className="border-t border-slate-800 hover:bg-slate-800/40 cursor-pointer transition"
     >
-      <td className="p-3 font-medium">{warehouse.name}</td>
+      {/* NAME */}
+      <td className="p-3 font-medium">
+        {warehouse.name}
+      </td>
 
+      {/* DEFAULT */}
       <td className="p-3 text-center">
-        {warehouse.is_default ? (
-          <span className="px-2 py-1 rounded text-xs bg-green-600/30 text-green-300">
-            DEFAULT
+        {warehouse.isDefault ? (
+          <span className="px-2 py-1 rounded-full text-xs bg-emerald-600/20 text-emerald-400">
+            Yes
           </span>
         ) : (
-          <span className="text-slate-500">—</span>
+          <span className="text-slate-600 text-xs">No</span>
         )}
       </td>
 
+      {/* CITY */}
       <td className="p-3">
-        {warehouse.origin_address?.city_locality}
+        {address.city || "-"}
       </td>
 
+      {/* COUNTRY */}
       <td className="p-3">
-        {warehouse.origin_address?.country_code}
+        {address.country || "-"}
       </td>
 
-      <td className="p-3">
-        {warehouse.origin_address?.phone}
+      {/* CODE */}
+      <td className="p-3 font-mono text-xs">
+        {warehouse.code || "-"}
       </td>
 
-      <td className="p-3">
-        {new Date(warehouse.created_at).toLocaleDateString()}
+      {/* CREATED */}
+      <td className="p-3 text-slate-500 text-xs">
+        {new Date(warehouse.createdAt).toLocaleDateString()}
       </td>
     </tr>
   );
