@@ -10,23 +10,36 @@ export default function LinkShopifyModal({
   onLinked,
 }) {
   const [selected, setSelected] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (!open || !shopifyProduct) return null;
 
   async function handleLink() {
-    if (!selected) return alert("Select a product");
+    if (!selected) {
+      alert("Please select a Master Product");
+      return;
+    }
 
-    await axios.patch(
-      `http://localhost:5000/api/master-products/${selected}/link-shopify`,
-      {
-        sku: shopifyProduct.sku,
-        productId: shopifyProduct.product_id,
-        variantId: shopifyProduct.variant_id,
-      }
-    );
+    try {
+      setLoading(true);
 
-    onLinked();
-    onClose();
+      await axios.patch(
+        `http://localhost:5000/api/master-products/${selected}/link-shopify`,
+        {
+          sku: shopifyProduct.sku,
+          productId: shopifyProduct.product_id,
+          variantId: shopifyProduct.variant_id,
+        }
+      );
+
+      onLinked();
+      onClose();
+    } catch (err) {
+      console.error("Link error:", err.response?.data || err.message);
+      alert("Failed to link product");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -39,12 +52,11 @@ export default function LinkShopifyModal({
           <X />
         </button>
 
-        <h2 className="text-lg font-semibold mb-4">
-          Link to Master Product
-        </h2>
+        <h2 className="text-lg font-semibold mb-4">Link to Master Product</h2>
 
         <p className="text-sm text-slate-400 mb-4">
-          Shopify: {shopifyProduct.title} / {shopifyProduct.sku}
+          Shopify: <span className="font-semibold">{shopifyProduct.title}</span>{" "}
+          • <span className="font-mono">{shopifyProduct.sku}</span>
         </p>
 
         <select
@@ -62,9 +74,10 @@ export default function LinkShopifyModal({
 
         <button
           onClick={handleLink}
-          className="w-full bg-cyan-600 hover:bg-cyan-700 py-2 rounded"
+          disabled={loading}
+          className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 py-2 rounded"
         >
-          Link Product
+          {loading ? "Linking..." : "Link Product"}
         </button>
       </div>
     </div>

@@ -5,7 +5,7 @@ import cors from "cors";
 import shipmentRoutes from "./routes/shipmentRoutes.js";
 import productsRoutes from "./routes/prouductsRoutes.js";
 import shopifyInventory from "./routes/shopifyInventoryRoutes.js";
-import masterProductsRoutes from "./routes/masterProducts.js";
+import masterProductsRoutes from "./routes/masterProductsRoutes.js";
 import { connectDB } from "./config/db.js";
 import warehouseRoutes from "./routes/warehousesRoutes.js";
 
@@ -25,7 +25,7 @@ app.use("/products", productsRoutes)
 app.use("/api/shopify", shopifyInventory);
 
 
-app.use("/api", masterProductsRoutes);
+app.use("/api/master-products", masterProductsRoutes);
 
 app.use("/api/warehouses", warehouseRoutes);
 
