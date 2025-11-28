@@ -1,8 +1,15 @@
 import MasterProduct from "../models/MasterProduct.js";
+import axios from "axios";
+
+const STORE = process.env.SHOPIFY_STORE_URL;
+const TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+const BASE = `https://${STORE}/admin/api/2024-01`;
 
 /**
- * GET /api/master-products
- * Returns all master products with populated warehouse info
+ * ✅ GET /api/master-products
+ * - Internal warehouses
+ * - Total available
+ * - Shopify locations + name + stock
  */
 export const getAllMasterProducts = async (req, res) => {
   try {
@@ -10,28 +17,80 @@ export const getAllMasterProducts = async (req, res) => {
       .populate("locations.warehouse")
       .lean();
 
-    // Add totalAvailable computed
-    const enriched = products.map((p) => ({
-      ...p,
-      totalAvailable: (p.locations || []).reduce(
-        (sum, loc) => sum + (loc.available || 0),
+    // ✅ GET ALL SHOPIFY LOCATIONS ONCE (for name lookup)
+    let shopifyLocationMap = {};
+    try {
+      const locRes = await axios.get(`${BASE}/locations.json`, {
+        headers: { "X-Shopify-Access-Token": TOKEN },
+      });
+
+      locRes.data.locations.forEach((l) => {
+        shopifyLocationMap[l.id] = l.name;
+      });
+    } catch (err) {
+      console.error(
+        "Shopify location error:",
+        err.response?.data || err.message
+      );
+    }
+
+    const enriched = [];
+
+    for (const p of products) {
+      const totalAvailable = (p.locations || []).reduce(
+        (sum, loc) => sum + (Number(loc.available) || 0),
         0
-      ),
-    }));
+      );
+
+      let shopifyLevels = [];
+
+      // ✅ If linked to Shopify, fetch inventory levels
+      if (p.channels?.shopify?.inventory_item_id) {
+        try {
+          const stockRes = await axios.get(
+            `${BASE}/inventory_levels.json?inventory_item_ids=${p.channels.shopify.inventory_item_id}`,
+            {
+              headers: { "X-Shopify-Access-Token": TOKEN },
+            }
+          );
+
+          // ✅ Attach location name to each level
+          shopifyLevels = (stockRes.data.inventory_levels || []).map(
+            (l) => ({
+              location_id: l.location_id,
+              available: l.available,
+              location_name:
+                shopifyLocationMap[l.location_id] || l.location_id,
+              channel: "Shopify",
+            })
+          );
+        } catch (err) {
+          console.error(
+            "Shopify inventory error:",
+            err.response?.data || err.message
+          );
+        }
+      }
+
+      enriched.push({
+        ...p,
+        totalAvailable,
+        shopifyLevels,   // ✅ Location + name + qty
+      });
+    }
 
     res.json({ success: true, products: enriched });
   } catch (err) {
     console.error("Master products fetch error:", err);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to load products" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to load products",
+    });
   }
 };
 
-
 /**
- * POST /api/master-products
- * Create a new master product
+ * ✅ POST /api/master-products
  */
 export const createMasterProduct = async (req, res) => {
   try {
@@ -60,55 +119,94 @@ export const createMasterProduct = async (req, res) => {
   }
 };
 
-
-
-/* ✅ ADD STOCK TO MASTER PRODUCT */
+/**
+ * ✅ PATCH /api/master-products/:id/add-stock
+ */
 export const addStockToMasterProduct = async (req, res) => {
   try {
     const { warehouseId, quantity } = req.body;
 
     const product = await MasterProduct.findById(req.params.id);
 
-
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
 
     const location = product.locations.find(
-      l => String(l.warehouse) === String(warehouseId)
+      (l) => String(l.warehouse) === String(warehouseId)
     );
 
     if (location) {
-      location.onHand += quantity;
-      location.available += quantity;
+      location.onHand += Number(quantity);
+      location.available += Number(quantity);
     } else {
       product.locations.push({
         warehouse: warehouseId,
-        onHand: quantity,
+        onHand: Number(quantity),
         reserved: 0,
-        available: quantity,
-        safetyStock: 0
+        available: Number(quantity),
+        safetyStock: 0,
       });
     }
 
     await product.save();
 
-    res.json({ success: true });
+    res.json({ success: true, product });
   } catch (err) {
-    console.error("Server error:", err.response?.data || err.message);
+    console.error("Add stock error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to add stock",
+    });
   }
-
-}
+};
 
 /**
- * PATCH /api/master-products/:id/link-shopify
- * body: { sku, productId, variantId }
+ * ✅ PATCH /api/master-products/:id/stock
  */
+export const updateMasterStock = async (req, res) => {
+  try {
+    const { warehouseId, available } = req.body;
 
+    const product = await MasterProduct.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const location = product.locations.find(
+      (l) => String(l.warehouse) === String(warehouseId)
+    );
+
+    if (!location) {
+      return res.status(404).json({ message: "Warehouse not linked" });
+    }
+
+    location.available = Number(available);
+    await product.save();
+
+    res.json({ success: true, product });
+  } catch (err) {
+    console.error("Update stock error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update stock",
+    });
+  }
+};
+
+/**
+ * ✅ PATCH /api/master-products/:id/link-shopify
+ */
 export const linkShopifyProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { sku, productId, variantId } = req.body;
+    const { sku, productId, variantId, inventory_item_id } = req.body;
 
-    if (!sku) {
-      return res.status(400).json({ message: "SKU is required" });
+    if (!sku || !inventory_item_id) {
+      return res.status(400).json({
+        message: "SKU & inventory_item_id are required",
+      });
     }
 
     const product = await MasterProduct.findById(id);
@@ -117,16 +215,13 @@ export const linkShopifyProduct = async (req, res) => {
       return res.status(404).json({ message: "Master product not found" });
     }
 
-    // ✅ ENSURE channels object exists
-    if (!product.channels) {
-      product.channels = {};
-    }
+    if (!product.channels) product.channels = {};
 
-    // ✅ LINK SHOPIFY DATA
     product.channels.shopify = {
       sku,
       productId,
       variantId,
+      inventory_item_id,
     };
 
     await product.save();
@@ -145,9 +240,8 @@ export const linkShopifyProduct = async (req, res) => {
   }
 };
 
-
 /**
- * PATCH /api/master-products/:id/unlink-shopify
+ * ✅ PATCH /api/master-products/:id/unlink-shopify
  */
 export const unlinkShopifyProduct = async (req, res) => {
   try {
@@ -159,12 +253,9 @@ export const unlinkShopifyProduct = async (req, res) => {
       return res.status(404).json({ message: "Master product not found" });
     }
 
-    if (!product.channels) {
-      product.channels = {};
-    }
+    if (!product.channels) product.channels = {};
 
-    // ✅ REMOVE SHOPIFY ONLY
-    product.channels.shopify = undefined;
+    delete product.channels.shopify;
 
     await product.save();
 
@@ -181,4 +272,3 @@ export const unlinkShopifyProduct = async (req, res) => {
     });
   }
 };
-

@@ -1,5 +1,5 @@
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 export default function LinkShopifyModal({
@@ -11,6 +11,13 @@ export default function LinkShopifyModal({
 }) {
   const [selected, setSelected] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Reset dropdown when reopening
+  useEffect(() => {
+    if (open) {
+      setSelected("");
+    }
+  }, [open]);
 
   if (!open || !shopifyProduct) return null;
 
@@ -29,6 +36,7 @@ export default function LinkShopifyModal({
           sku: shopifyProduct.sku,
           productId: shopifyProduct.product_id,
           variantId: shopifyProduct.variant_id,
+          inventory_item_id: shopifyProduct.inventory_item_id, // ✅ REQUIRED
         }
       );
 
@@ -45,6 +53,7 @@ export default function LinkShopifyModal({
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
       <div className="w-[480px] bg-slate-900 border border-slate-800 rounded-xl p-6 relative">
+
         <button
           onClick={onClose}
           className="absolute right-4 top-4 text-slate-400 hover:text-white"
@@ -52,10 +61,13 @@ export default function LinkShopifyModal({
           <X />
         </button>
 
-        <h2 className="text-lg font-semibold mb-4">Link to Master Product</h2>
+        <h2 className="text-lg font-semibold mb-4">
+          Link to Master Product
+        </h2>
 
         <p className="text-sm text-slate-400 mb-4">
-          Shopify: <span className="font-semibold">{shopifyProduct.title}</span>{" "}
+          Shopify:{" "}
+          <span className="font-semibold">{shopifyProduct.title}</span>{" "}
           • <span className="font-mono">{shopifyProduct.sku}</span>
         </p>
 
@@ -75,7 +87,7 @@ export default function LinkShopifyModal({
         <button
           onClick={handleLink}
           disabled={loading}
-          className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 py-2 rounded"
+          className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 py-2 rounded font-medium"
         >
           {loading ? "Linking..." : "Link Product"}
         </button>
