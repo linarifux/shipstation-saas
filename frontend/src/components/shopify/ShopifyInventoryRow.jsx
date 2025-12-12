@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link2, ArrowUpDown, Unlink, Loader2 } from "lucide-react";
+import toast from "react-hot-toast"; // 1. Import toast
 
 export default function ShopifyInventoryRow({
   product,
@@ -20,11 +21,26 @@ export default function ShopifyInventoryRow({
   const isBusy = updating || syncing || unlinking;
 
   async function handleUpdate() {
-    if (qty === "" || isNaN(qty)) return alert("Enter a valid quantity");
+    // 2. Replace alert with toast error
+    if (qty === "" || isNaN(qty)) {
+      toast.error("Enter a valid quantity");
+      return;
+    }
 
     try {
       setUpdating(true);
-      await onUpdate(product.inventory_item_id, level.location_id, qty);
+      
+      // 3. Wrap the async update in a promise toast
+      await toast.promise(
+        onUpdate(product.inventory_item_id, level.location_id, qty),
+        {
+          loading: "Updating quantity...",
+          success: "Quantity updated",
+          error: "Failed to update quantity",
+        }
+      );
+    } catch (err) {
+      console.error(err);
     } finally {
       setUpdating(false);
     }
@@ -35,21 +51,62 @@ export default function ShopifyInventoryRow({
 
     try {
       setSyncing(true);
-      await onSync();
+      
+      // 4. Wrap sync action in promise toast
+      await toast.promise(onSync(), {
+        loading: "Syncing with master...",
+        success: "Sync complete",
+        error: "Sync failed",
+      });
+    } catch (err) {
+      console.error(err);
     } finally {
       setSyncing(false);
     }
   }
 
-  async function handleUnlink() {
+  function handleUnlink() {
     if (!master) return;
 
-    const confirm = window.confirm(
-      `Unlink Shopify product "${product.title}" from Master Product "${master.name}"?`
+    // Trigger a custom toast
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <span className="font-medium text-sm">
+            Unlink from <span className="font-bold">{master.name}</span>?
+          </span>
+          <div className="flex gap-2 mt-1">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id); // Close the confirmation toast
+                executeUnlink();     // Run the actual unlink logic
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded transition"
+            >
+              Yes, Unlink
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: 5000, // Keep it open longer so user has time to decide
+        style: {
+          background: '#1e293b', // slate-800
+          color: '#fff',
+          border: '1px solid #334155', // slate-700
+        },
+      }
     );
+  }
 
-    if (!confirm) return;
-
+  // ✅ Separate the actual async logic into its own function
+  async function executeUnlink() {
     try {
       setUnlinking(true);
       await onUnlink(master._id);
@@ -96,7 +153,7 @@ export default function ShopifyInventoryRow({
             <button
               onClick={handleSync}
               disabled={isBusy}
-              className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 px-2 py-1 rounded text-xs"
+              className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 px-2 py-1 rounded text-xs transition-colors"
             >
               {syncing ? (
                 <Loader2 size={12} className="animate-spin" />
@@ -109,7 +166,7 @@ export default function ShopifyInventoryRow({
             <button
               onClick={handleUnlink}
               disabled={isBusy}
-              className="flex items-center gap-1 text-red-400 hover:text-red-500 disabled:opacity-50 text-xs"
+              className="flex items-center gap-1 text-red-400 hover:text-red-500 disabled:opacity-50 text-xs transition-colors"
             >
               <Unlink size={12} />
               {unlinking ? "..." : "Unlink"}
@@ -119,7 +176,7 @@ export default function ShopifyInventoryRow({
           <button
             onClick={() => onLink(product)}
             disabled={isBusy}
-            className="bg-cyan-700 hover:bg-cyan-800 px-2 py-1 text-xs rounded disabled:opacity-50"
+            className="bg-cyan-700 hover:bg-cyan-800 px-2 py-1 text-xs rounded disabled:opacity-50 transition-colors"
           >
             Link Product
           </button>
@@ -133,7 +190,7 @@ export default function ShopifyInventoryRow({
           min="0"
           value={qty}
           onChange={(e) => setQty(e.target.value)}
-          className="w-24 px-2 py-1 bg-slate-800 border border-slate-700 rounded"
+          className="w-24 px-2 py-1 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-600"
         />
       </td>
 
@@ -142,7 +199,7 @@ export default function ShopifyInventoryRow({
         <button
           onClick={handleUpdate}
           disabled={updating || qty === ""}
-          className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 px-3 py-1 rounded text-sm"
+          className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 px-3 py-1 rounded text-sm transition-colors flex items-center justify-center min-w-[70px]"
         >
           {updating ? <Loader2 size={14} className="animate-spin" /> : "Update"}
         </button>

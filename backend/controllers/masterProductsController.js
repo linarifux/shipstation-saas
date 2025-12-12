@@ -5,19 +5,22 @@ const STORE = process.env.SHOPIFY_STORE_URL;
 const TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
 const BASE = `https://${STORE}/admin/api/2024-01`;
 
+
 /**
  * ✅ GET /api/master-products
  * - Internal warehouses
- * - Total available
- * - Shopify locations + name + stock
+ * - Shopify locations
+ * - GRAND TOTAL (Internal + Unique Shopify Stock)
  */
 export const getAllMasterProducts = async (req, res) => {
   try {
+    // 1. Fetch all Master Products from DB
+    // We populate 'locations.warehouse' to get the internal warehouse NAMES
     const products = await MasterProduct.find()
       .populate("locations.warehouse")
       .lean();
 
-    // ✅ GET ALL SHOPIFY LOCATIONS ONCE (for name lookup)
+    // 2. Fetch all Shopify Locations (ONCE)
     let shopifyLocationMap = {};
     try {
       const locRes = await axios.get(`${BASE}/locations.json`, {
@@ -28,56 +31,107 @@ export const getAllMasterProducts = async (req, res) => {
         shopifyLocationMap[l.id] = l.name;
       });
     } catch (err) {
-      console.error(
-        "Shopify location error:",
-        err.response?.data || err.message
-      );
+      console.error("Shopify locations fetch failed:", err.message);
     }
 
-    const enriched = [];
+    // 3. Collect all Inventory Item IDs to fetch in bulk
+    const inventoryItemIds = products
+      .map((p) => p.channels?.shopify?.inventory_item_id)
+      .filter((id) => id); // Remove null/undefined
 
-    for (const p of products) {
-      const totalAvailable = (p.locations || []).reduce(
-        (sum, loc) => sum + (Number(loc.available) || 0),
-        0
-      );
+    // 4. Batch Fetch Inventory Levels (Chunk size 50)
+    let allShopifyLevels = [];
+    const chunkSize = 50;
 
-      let shopifyLevels = [];
+    for (let i = 0; i < inventoryItemIds.length; i += chunkSize) {
+      const chunk = inventoryItemIds.slice(i, i + chunkSize);
+      const idsString = chunk.join(",");
 
-      // ✅ If linked to Shopify, fetch inventory levels
-      if (p.channels?.shopify?.inventory_item_id) {
-        try {
-          const stockRes = await axios.get(
-            `${BASE}/inventory_levels.json?inventory_item_ids=${p.channels.shopify.inventory_item_id}`,
-            {
-              headers: { "X-Shopify-Access-Token": TOKEN },
-            }
-          );
+      try {
+        const stockRes = await axios.get(
+          `${BASE}/inventory_levels.json?inventory_item_ids=${idsString}&limit=250`,
+          { headers: { "X-Shopify-Access-Token": TOKEN } }
+        );
 
-          // ✅ Attach location name to each level
-          shopifyLevels = (stockRes.data.inventory_levels || []).map(
-            (l) => ({
-              location_id: l.location_id,
-              available: l.available,
-              location_name:
-                shopifyLocationMap[l.location_id] || l.location_id,
-              channel: "Shopify",
-            })
-          );
-        } catch (err) {
-          console.error(
-            "Shopify inventory error:",
-            err.response?.data || err.message
-          );
+        if (stockRes.data.inventory_levels) {
+          allShopifyLevels = [
+            ...allShopifyLevels,
+            ...stockRes.data.inventory_levels,
+          ];
         }
+      } catch (err) {
+        console.error(
+          `Batch fetch error (chunk ${i}):`,
+          err.response?.data || err.message
+        );
+      }
+    }
+
+    // 5. Merge & Calculate Grand Total (Updated Logic)
+    const enriched = products.map((p) => {
+      // A. Calculate Internal Warehouse Total & Get Names
+      const internalLocationNames = new Set(); // To track names for exclusion
+
+      const internalTotal = (p.locations || []).reduce((sum, loc) => {
+        // Store the warehouse name in our Set (lowercase for safe comparison)
+        if (loc.warehouse && loc.warehouse.name) {
+          internalLocationNames.add(loc.warehouse.name.toLowerCase().trim());
+        }
+        return sum + (Number(loc.available) || 0);
+      }, 0);
+
+      // B. Process Shopify Levels
+      let shopifyLevels = [];
+      let shopifyTotal = 0; // Total raw count from Shopify
+      let uniqueShopifyStock = 0; // Count only from locations NOT in internal DB
+
+      const shopifyItemId = p.channels?.shopify?.inventory_item_id;
+
+      if (shopifyItemId) {
+        // Find levels for this specific product
+        const levels = allShopifyLevels.filter(
+          (l) => String(l.inventory_item_id) === String(shopifyItemId)
+        );
+
+        levels.forEach((l) => {
+          const qty = Number(l.available) || 0;
+          const locName = shopifyLocationMap[l.location_id] || "";
+
+          // 1. Add to raw Shopify total
+          shopifyTotal += qty;
+
+          // 2. CHECK: Is this location name already counted in Internal Warehouse?
+          // Only add to "unique" stock if the name is NOT in our internal list
+          if (!internalLocationNames.has(locName.toLowerCase().trim())) {
+            uniqueShopifyStock += qty;
+          }
+        });
+
+        // Map for frontend display
+        shopifyLevels = levels.map((l) => ({
+          location_id: l.location_id,
+          available: l.available,
+          location_name:
+            shopifyLocationMap[l.location_id] || `Loc: ${l.location_id}`,
+          channel: "Shopify",
+          // Add a flag so frontend knows this is a duplicate/synced location
+          isDuplicate: internalLocationNames.has(
+            (shopifyLocationMap[l.location_id] || "").toLowerCase().trim()
+          ),
+        }));
       }
 
-      enriched.push({
+      // C. Grand Total = Internal Stock + Unique (Non-Overlapping) Shopify Stock
+      const totalAvailable = internalTotal + uniqueShopifyStock;
+
+      return {
         ...p,
-        totalAvailable,
-        shopifyLevels,   // ✅ Location + name + qty
-      });
-    }
+        internalTotal,
+        shopifyTotal,
+        totalAvailable, // ✅ Correctly excludes duplicates
+        shopifyLevels,
+      };
+    });
 
     res.json({ success: true, products: enriched });
   } catch (err) {
@@ -88,6 +142,8 @@ export const getAllMasterProducts = async (req, res) => {
     });
   }
 };
+
+
 
 /**
  * ✅ POST /api/master-products
@@ -240,24 +296,24 @@ export const linkShopifyProduct = async (req, res) => {
   }
 };
 
+
 /**
  * ✅ PATCH /api/master-products/:id/unlink-shopify
+ * Uses $unset for reliable deletion
  */
 export const unlinkShopifyProduct = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const product = await MasterProduct.findById(id);
+    const product = await MasterProduct.findByIdAndUpdate(
+      id,
+      { $unset: { "channels.shopify": "" } },
+      { new: true }
+    );
 
     if (!product) {
       return res.status(404).json({ message: "Master product not found" });
     }
-
-    if (!product.channels) product.channels = {};
-
-    delete product.channels.shopify;
-
-    await product.save();
 
     res.json({
       success: true,

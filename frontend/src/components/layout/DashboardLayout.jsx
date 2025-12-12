@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
+import { Toaster } from 'react-hot-toast';
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -54,6 +55,16 @@ export default function DashboardLayout() {
         </main>
 
       </div>
+
+      <Toaster 
+        position="top-center"
+        toastOptions={{
+          style: {
+            background: '#334155', // matches slate-700
+            color: '#fff',
+          },
+        }}
+      />
 
     </div>
   );

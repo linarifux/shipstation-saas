@@ -28,6 +28,7 @@ const channelMapSchema = new Schema(
       sku: String,
       productId: String,
       variantId: String,
+      inventory_item_id: String,
     },
     amazon: {
       sku: String,
@@ -39,7 +40,7 @@ const channelMapSchema = new Schema(
     },
     shipstation: {
       sku: String,
-      productId: String, // if you use ShipStation products
+      productId: String,
     },
   },
   { _id: false }

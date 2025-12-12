@@ -9,10 +9,6 @@ export default function MasterProductRow({
   refresh,
   onAddStock,
 }) {
-  const total = product.locations?.reduce(
-    (sum, loc) => sum + (loc.available || 0),
-    0
-  );
 
   const channels = product.channels || {};
 
@@ -37,7 +33,7 @@ export default function MasterProductRow({
 
         {/* TOTAL MASTER STOCK */}
         <td className="p-3 font-bold text-cyan-400">
-          {total}
+          {product?.totalAvailable}
         </td>
 
         {/* ✅ CONNECTED CHANNELS */}
@@ -59,14 +55,6 @@ export default function MasterProductRow({
               <span className="inline-block px-2 py-1 text-xs rounded bg-indigo-700/30 text-indigo-300 border border-indigo-500">
                 Shopify
               </span>
-
-              {product.shopifyLevels?.length > 0 && (
-                <ChannelLocations
-                  name="Shopify"
-                  data={product.shopifyLevels}
-                  color="indigo"
-                />
-              )}
             </div>
           )}
 

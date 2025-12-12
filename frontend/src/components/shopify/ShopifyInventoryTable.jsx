@@ -1,6 +1,7 @@
 import ShopifyInventoryRow from "./ShopifyInventoryRow";
 import { getMasterMatch } from "../../utils/getMasterMatch";
 import axios from "axios";
+import toast from "react-hot-toast"; // 1. Import toast
 
 export default function ShopifyInventoryTable({
   products = [],
@@ -24,21 +25,26 @@ export default function ShopifyInventoryTable({
     if (!masterId) return;
 
     try {
-      await axios.patch(
-        `http://localhost:5000/api/master-products/${masterId}/unlink-shopify`
+      // 2. Wrap the async call with toast.promise for a nice UX
+      await toast.promise(
+        axios.patch(`http://localhost:5000/api/master-products/${masterId}/unlink-shopify`),
+        {
+          loading: 'Unlinking product...',
+          success: 'Product unlinked successfully!',
+          error: 'Failed to unlink this product',
+        }
       );
 
       refresh && refresh();
     } catch (error) {
       console.error("Unlink failed", error);
-      alert("Failed to unlink this product");
+      // toast.promise handles the error message, no need for alert
     }
   }
 
   return (
     <div className="overflow-x-auto bg-slate-900 rounded-xl border border-slate-800">
       <table className="w-full text-sm text-left">
-
         {/* HEADER */}
         <thead className="bg-slate-800 text-slate-300">
           <tr>
@@ -58,9 +64,7 @@ export default function ShopifyInventoryTable({
 
             return item.levels.map((lvl) => {
               const master = getMasterMatch(masterProducts, item.sku);
-              const locationName = locations
-                ? locations[lvl.location_id]
-                : null;
+              const locationName = locations ? locations[lvl.location_id] : null;
 
               return (
                 <ShopifyInventoryRow
@@ -69,16 +73,15 @@ export default function ShopifyInventoryTable({
                   level={lvl}
                   locationName={locationName}
                   master={master}
-
                   onUpdate={onUpdate}
-
                   onSync={() => {
-                    if (!master) return alert("No master product linked");
+                    if (!master) {
+                      // 3. Replace inline alert with toast error
+                      return toast.error("No master product linked");
+                    }
                     return onSync(master);
                   }}
-
                   onLink={() => onLink(item)}
-
                   onUnlink={() => {
                     if (!master?._id) return;
                     return unlinkShopify(master._id);

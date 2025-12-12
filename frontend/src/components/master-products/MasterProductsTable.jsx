@@ -15,7 +15,7 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900">
       <table className="w-full text-sm">
-        <thead className="bg-slate-800 text-slate-300">
+        <thead className="bg-slate-800 text-slate-300 text-left">
           <tr>
             <th className="p-3"></th>
             <th className="p-3">Product</th>

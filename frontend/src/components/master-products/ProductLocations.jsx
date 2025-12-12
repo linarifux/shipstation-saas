@@ -5,6 +5,8 @@ import { Edit3, PlusCircle, Repeat } from "lucide-react"
 export default function ProductLocations({ product, refresh, onAddStock }) {
 
   const locations = product.locations || []
+  console.log(product);
+  
   const shopifyLocations = product.shopifyLevels || []
 
   const totalOnHand = locations.reduce((s, l) => s + (l.onHand || 0), 0)
@@ -33,28 +35,6 @@ export default function ProductLocations({ product, refresh, onAddStock }) {
   return (
     <div className="space-y-6">
 
-      {/* ================= SUMMARY ================= */}
-      <div className="grid grid-cols-3 gap-4 text-sm">
-        <div className="bg-slate-900 p-3 rounded-lg border border-slate-700">
-          <p className="text-slate-400">On Hand</p>
-          <p className="text-lg font-bold">{totalOnHand}</p>
-        </div>
-
-        <div className="bg-slate-900 p-3 rounded-lg border border-slate-700">
-          <p className="text-slate-400">Reserved</p>
-          <p className="text-lg font-bold text-yellow-400">
-            {totalReserved}
-          </p>
-        </div>
-
-        <div className="bg-slate-900 p-3 rounded-lg border border-slate-700">
-          <p className="text-slate-400">Available</p>
-          <p className="text-lg font-bold text-cyan-400">
-            {totalAvailable}
-          </p>
-        </div>
-      </div>
-
       {/* ================= ADD NEW LOCATION ================= */}
       <div className="flex justify-between">
         <h3 className="text-sm font-semibold text-slate-300">
@@ -74,7 +54,7 @@ export default function ProductLocations({ product, refresh, onAddStock }) {
       <div className="rounded-lg border border-slate-800 overflow-hidden">
         <table className="w-full text-xs">
           <thead className="bg-slate-900 text-slate-300">
-            <tr>
+            <tr className="text-left">
               <th className="p-2 text-left">Location</th>
               <th className="p-2">On Hand</th>
               <th className="p-2">Reserved</th>
@@ -88,7 +68,7 @@ export default function ProductLocations({ product, refresh, onAddStock }) {
               const id = loc.warehouse?._id || loc.warehouse
 
               return (
-                <tr key={id} className="border-t border-slate-800">
+                <tr key={id} className="border-t border-slate-800 text-left">
                   
                   <td className="p-2">
                     <div className="font-medium">
