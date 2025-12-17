@@ -17,7 +17,7 @@ export default function AddStockModal({ open, onClose, product, onUpdated }) {
 
   const fetchWarehouses = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/warehouses");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/warehouse`);
       setWarehouses(res.data.warehouses || []);
     } catch (err) {
       console.error("Failed to load warehouses", err);
@@ -34,7 +34,7 @@ export default function AddStockModal({ open, onClose, product, onUpdated }) {
       setLoading(true);
 
       await axios.patch(
-        `http://localhost:5000/api/master-products/${product._id}/add-stock`,
+        `${import.meta.env.VITE_BACKEND_URL}/master-products/${product._id}/add-stock`,
         {
           warehouseId,
           quantity: parseInt(quantity),

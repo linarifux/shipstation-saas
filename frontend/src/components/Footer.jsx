@@ -11,16 +11,17 @@ export default function Footer() {
   }
 
   return (
-    <footer className="mt-20 border-t border-slate-800 bg-slate-950 pt-16 pb-10 text-slate-300">
-      <div className="mx-auto max-w-6xl px-6">
+    // Responsive spacing: mt-12/pt-12 on mobile, larger on desktop
+    <footer className="mt-12 md:mt-20 border-t border-slate-800 bg-slate-950 pt-12 md:pt-16 pb-10 text-slate-300">
+      <div className="mx-auto max-w-6xl px-4 md:px-6">
 
         {/* Newsletter Section */}
-        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 px-6 py-10 shadow-lg shadow-slate-900/60 md:px-10">
-          <div className="grid gap-10 md:grid-cols-2">
+        <section className="rounded-2xl border border-slate-800 bg-slate-900/70 px-4 py-8 md:px-10 md:py-10 shadow-lg shadow-slate-900/60">
+          <div className="grid gap-6 md:gap-10 md:grid-cols-2 items-center">
             
             {/* Left */}
-            <div>
-              <h3 className="text-xl font-semibold text-slate-50 md:text-2xl">
+            <div className="text-center md:text-left">
+              <h3 className="text-lg font-semibold text-slate-50 md:text-2xl">
                 Stay updated with ShipFlow
               </h3>
               <p className="mt-2 text-sm text-slate-400">
@@ -29,10 +30,10 @@ export default function Footer() {
               </p>
             </div>
 
-            {/* Right */}
+            {/* Right (Form) */}
             <form
               onSubmit={handleSubscribe}
-              className="flex flex-col gap-4 sm:flex-row sm:items-center"
+              className="flex flex-col gap-3 sm:flex-row sm:items-center w-full"
             >
               <input
                 type="email"
@@ -40,12 +41,12 @@ export default function Footer() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-slate-700 bg-slate-800/70 px-4 py-3 text-sm text-slate-100 placeholder-slate-400 shadow-sm shadow-slate-900/60 focus:border-cyan-400 focus:outline-none focus:ring focus:ring-cyan-500/20"
+                className="w-full rounded-xl border border-slate-700 bg-slate-800/70 px-4 py-3 text-sm text-slate-100 placeholder-slate-400 shadow-sm focus:border-cyan-400 focus:outline-none focus:ring focus:ring-cyan-500/20 transition-all"
               />
 
               <button
                 type="submit"
-                className="rounded-xl bg-cyan-500 px-6 py-3 text-sm font-semibold text-slate-900 shadow-md shadow-cyan-500/30 transition hover:bg-cyan-400"
+                className="w-full sm:w-auto whitespace-nowrap rounded-xl bg-cyan-500 px-6 py-3 text-sm font-semibold text-slate-900 shadow-md shadow-cyan-500/30 transition hover:bg-cyan-400"
               >
                 Subscribe
               </button>
@@ -54,20 +55,22 @@ export default function Footer() {
         </section>
 
         {/* Top Grid: Brand + Navigation */}
-        <div className="mt-16 grid gap-12 md:grid-cols-5">
+        {/* Mobile: grid-cols-2 (Brand takes full width, Links sit side-by-side) */}
+        {/* Desktop: grid-cols-5 (Brand takes 2, Links take 1 each) */}
+        <div className="mt-12 grid grid-cols-2 gap-8 md:mt-16 md:grid-cols-5 md:gap-12">
 
-          {/* Brand Column */}
-          <div className="md:col-span-2">
-            <h3 className="text-2xl font-bold text-slate-50 tracking-tight">
+          {/* Brand Column - Spans 2 cols (Full width on mobile, 40% on desktop) */}
+          <div className="col-span-2">
+            <h3 className="text-2xl font-bold text-slate-50 tracking-tight flex items-center gap-2">
               ShipFlow
             </h3>
-            <p className="mt-3 text-sm text-slate-400 leading-relaxed">
+            <p className="mt-4 max-w-sm text-sm text-slate-400 leading-relaxed">
               Automate your ShipStation operations with custom fields, rules, analytics, and
               powerful background workflows.
             </p>
 
             {/* Social Icons */}
-            <div className="mt-5 flex gap-4">
+            <div className="mt-6 flex gap-4">
               <SocialIcon type="twitter" />
               <SocialIcon type="github" />
               <SocialIcon type="linkedin" />
@@ -80,7 +83,7 @@ export default function Footer() {
             links={[
               { label: "Dashboard", to: "/shipments" },
               { label: "Automation", to: "/automation" },
-              { label: "Analytics", to: "#" },
+              { label: "Analytics", to: "/analytics" },
               { label: "Integrations", to: "#" },
             ]}
           />
@@ -96,7 +99,7 @@ export default function Footer() {
             ]}
           />
 
-          {/* Legal Links */}
+          {/* Legal Links - On mobile (grid-cols-2), this will wrap to the next line alone */}
           <FooterColumn
             title="Legal"
             links={[
@@ -109,15 +112,15 @@ export default function Footer() {
         </div>
 
         {/* Bottom Row */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-slate-800 pt-6 text-sm md:flex-row">
-          <p className="text-slate-500">
+        <div className="mt-12 flex flex-col-reverse items-center justify-between gap-6 border-t border-slate-800 pt-8 text-sm md:flex-row">
+          <p className="text-slate-500 text-center md:text-left">
             © {new Date().getFullYear()} ShipFlow — All rights reserved.
           </p>
 
-          <div className="flex gap-6 text-slate-400">
-            <a href="#" className="hover:text-slate-200">Status</a>
-            <a href="#" className="hover:text-slate-200">API Docs</a>
-            <a href="#" className="hover:text-slate-200">Support</a>
+          <div className="flex flex-wrap justify-center gap-6 text-slate-400">
+            <a href="#" className="hover:text-slate-200 transition-colors">Status</a>
+            <a href="#" className="hover:text-slate-200 transition-colors">API Docs</a>
+            <a href="#" className="hover:text-slate-200 transition-colors">Support</a>
           </div>
         </div>
       </div>
@@ -129,12 +132,12 @@ export default function Footer() {
 
 function FooterColumn({ title, links }) {
   return (
-    <div>
-      <h4 className="mb-4 text-sm font-semibold text-slate-200">{title}</h4>
-      <ul className="space-y-2 text-sm">
+    <div className="flex flex-col">
+      <h4 className="mb-4 text-sm font-semibold text-slate-200 uppercase tracking-wider">{title}</h4>
+      <ul className="space-y-2.5 text-sm">
         {links.map((l, idx) => (
           <li key={idx}>
-            <Link to={l.to} className="hover:text-cyan-400">
+            <Link to={l.to} className="text-slate-400 hover:text-cyan-400 transition-colors">
               {l.label}
             </Link>
           </li>
@@ -166,7 +169,7 @@ function SocialIcon({ type }) {
   return (
     <a
       href="#"
-      className="p-2 rounded-lg bg-slate-900 border border-slate-800 hover:border-slate-600 hover:text-white transition"
+      className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:border-slate-600 hover:text-white transition-all"
     >
       {icons[type]}
     </a>
