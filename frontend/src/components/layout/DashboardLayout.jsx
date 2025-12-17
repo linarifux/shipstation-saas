@@ -3,6 +3,7 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { Toaster } from 'react-hot-toast';
+import Footer from '../Footer.jsx'
 
 export default function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -53,6 +54,8 @@ export default function DashboardLayout() {
             <Outlet />   {/* THIS MUST EXIST */}
           </div>
         </main>
+
+         <Footer />
 
       </div>
 

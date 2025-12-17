@@ -22,7 +22,7 @@ export default function MasterProducts() {
       setLoading(true);
       setError("");
 
-      const res = await axios.get("http://localhost:5000/api/master-products");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/master-products`);
 
       setProducts(res.data?.products || []);
     } catch (err) {

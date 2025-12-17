@@ -4,7 +4,7 @@ import { getAllShopifyOrders } from "../services/shopifyOrdersService.js";
 const router = express.Router();
 
 // GET /api/shopify/orders
-router.get("/shopify/orders", async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const orders = await getAllShopifyOrders();
     res.json({ success: true, orders });

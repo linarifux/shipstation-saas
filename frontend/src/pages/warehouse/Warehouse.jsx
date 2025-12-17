@@ -24,11 +24,10 @@ export default function Warehouses() {
       setLoading(true);
       setError("");
 
-      const res = await axios.get("http://localhost:5000/api/warehouses"); // ✅ FIXED ENDPOINT
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/warehouse`); // ✅ FIXED ENDPOINT
 
       setWarehouses(res.data?.warehouses || []);
     } catch (err) {
-      console.error("Error fetching warehouses", err);
       setError("Failed to load warehouses. Check database or server.");
       setWarehouses([]);
     } finally {

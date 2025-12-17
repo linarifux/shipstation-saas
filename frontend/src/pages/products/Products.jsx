@@ -18,7 +18,7 @@ export default function Products() {
   const fetchProducts = async () => {
     try {
       setLoading(true); // Start loading
-      const res = await axios.get("http://localhost:5000/products");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/products`);
       setProducts(res.data.products);
     }finally {
       // No loading state for now

@@ -11,10 +11,11 @@ export default function useShopifyInventory() {
     try {
       setLoading(true);
 
+
       const [invRes, masterRes, locRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/shopify/inventory"),
-        axios.get("http://localhost:5000/api/master-products"),
-        axios.get("http://localhost:5000/api/shopify/locations"),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/shopify/inventory`),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/master-products`),
+        axios.get(`${import.meta.env.VITE_BACKEND_URL}/shopify/locations`),
       ]);
 
       const locMap = {};

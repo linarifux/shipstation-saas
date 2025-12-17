@@ -17,7 +17,7 @@ export default function Shipments() {
   const fetchShipments = async () => {
     try {
       setLoading(true); // Start loading
-      const res = await axios.get("http://localhost:5000/shipments");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/shipments`);
       setShipments(res.data.shipments);
     } finally {
       setLoading(false); // Stop loading

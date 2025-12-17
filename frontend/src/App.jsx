@@ -1,11 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Shipments from "./pages/Shipments";
 import Automation from "./pages/Automation"; // for future
 import Settings from "./pages/Settings"; // for future
 import Home from "./pages/Home";
-import Footer from "./components/Footer";
-import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Products from "./pages/products/Products";
 import Warehouses from "./pages/warehouse/Warehouse";
@@ -36,7 +34,6 @@ export default function App() {
           <Route path="/master-products" element={<MasterProducts />} />
         </Route>
       </Routes>
-      <Footer />
     </BrowserRouter>
   );
 }

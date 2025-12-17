@@ -27,7 +27,7 @@ export default function ShopifyInventory() {
     try {
       if (!inventory_item_id || !location_id) return;
 
-      await axios.post("http://localhost:5000/api/shopify/inventory/update", {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/shopify/inventory/update`, {
         inventory_item_id,
         location_id,
         available: Number(newQty),
@@ -51,7 +51,7 @@ export default function ShopifyInventory() {
 
       const total = masterProduct.totalAvailable;
 
-      await axios.post("http://localhost:5000/api/shopify/inventory/sync", {
+      await axios.post(`${import.meta.env.VITE_BACKEND_URL}/shopify/inventory/sync`, {
         sku: masterProduct.channels.shopify.sku,
         quantity: total,
       });

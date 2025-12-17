@@ -14,7 +14,7 @@ export default function ShopifyOrders() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/shopify/orders");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/shopify/orders`);
       setOrders(res.data.orders);
     } catch (error) {
       console.error("Error loading orders", error);

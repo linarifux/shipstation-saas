@@ -8,6 +8,7 @@ import shopifyInventory from "./routes/shopifyInventoryRoutes.js";
 import masterProductsRoutes from "./routes/masterProductsRoutes.js";
 import { connectDB } from "./config/db.js";
 import warehouseRoutes from "./routes/warehousesRoutes.js";
+import shopifyOrders from './routes/shopifyOrders.js'
 
 
 const app = express();
@@ -18,7 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 
-app.use("/shipments", shipmentRoutes);
+app.use("/api/shipments", shipmentRoutes);
 app.use("/products", productsRoutes)
 
 
@@ -27,7 +28,9 @@ app.use("/api/shopify", shopifyInventory);
 
 app.use("/api/master-products", masterProductsRoutes);
 
-app.use("/api/warehouses", warehouseRoutes);
+app.use("/api/warehouse", warehouseRoutes);
+
+app.use("/api/shopify/orders", shopifyOrders)
 
 
 
