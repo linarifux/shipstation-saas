@@ -65,41 +65,12 @@ export default function Topbar({ toggleSidebar }) {
             ))}
           </div>
         </div>
-
-        {/* Search */}
-        <div className="hidden md:block ml-6 w-72">
-          <input
-            type="text"
-            placeholder={`Search in ${pageTitle}...`}
-            className="
-              w-full bg-slate-800/70 
-              border border-slate-700 
-              rounded-lg px-3 py-2 text-sm 
-              text-slate-200
-              placeholder-slate-400
-              focus:outline-none 
-              focus:border-cyan-500 
-              transition
-            "
-          />
-        </div>
       </div>
 
       {/* ================= RIGHT ================= */}
       <div className="flex items-center gap-5 text-slate-300">
 
-        {/* Add New Quick Action */}
-        <button
-          className="
-            hidden md:flex items-center gap-2 
-            bg-cyan-600 text-white 
-            px-3 py-1.5 rounded-lg 
-            hover:bg-cyan-700 transition
-          "
-        >
-          <Plus size={16} />
-          <span className="text-sm font-medium">Add</span>
-        </button>
+      
 
         {/* Notification Bell */}
         <button
