@@ -6,9 +6,9 @@ export default function Sidebar({ collapsed, toggle }) {
 
   const menu = [
     { label: "Shipments", to: "/shipments", icon: "🚚" },
-    { label: "Automation", to: "/automation", icon: "⚙️" },
     { label: "Analytics", to: "/analytics", icon: "📈" },
     { label: "Shopify Orders", to: "/shopify-orders", icon: "🛒" },
+    { label: "ShipStation Products", icon: "⚙️", to: "/shipstation-products" },
     { label: "Shopify Inventory", to: "/inventory", icon: "📦" },
     { label: "Master Products", to: "/master-products", icon: "🧾" },
   ];

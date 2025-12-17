@@ -9,6 +9,7 @@ import masterProductsRoutes from "./routes/masterProductsRoutes.js";
 import { connectDB } from "./config/db.js";
 import warehouseRoutes from "./routes/warehousesRoutes.js";
 import shopifyOrders from './routes/shopifyOrders.js'
+import shipstationRoutes from './routes/shipstationRoutes.js'
 
 
 const app = express();
@@ -31,6 +32,8 @@ app.use("/api/master-products", masterProductsRoutes);
 app.use("/api/warehouse", warehouseRoutes);
 
 app.use("/api/shopify/orders", shopifyOrders)
+
+app.use("/api/shipstation", shipstationRoutes);
 
 
 

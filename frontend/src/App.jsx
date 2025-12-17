@@ -12,6 +12,7 @@ import ShopifyOrders from "./pages/shopify/ShopifyOrders";
 import ShopifyInventory from "./pages/shopify/ShopifyInventory";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import MasterProducts from "./pages/masterProducts/MasterProducts";
+import ShipstationProducts from "./pages/shipstation/ShipstationProducts";
 
 
 export default function App() {
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/shopify-orders" element={<ShopifyOrders />} />
           <Route path="/inventory" element={<ShopifyInventory />} />
           <Route path="/master-products" element={<MasterProducts />} />
+          <Route path="/shipstation-products" element={<ShipstationProducts />} /> 
         </Route>
       </Routes>
     </BrowserRouter>

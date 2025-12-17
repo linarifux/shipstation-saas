@@ -328,3 +328,78 @@ export const unlinkShopifyProduct = async (req, res) => {
     });
   }
 };
+
+
+/**
+ * ✅ PATCH /api/master-products/:id/link-shipstation
+ */
+export const linkShipstationProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sku, productId } = req.body;
+
+    if (!sku) {
+      return res.status(400).json({ message: "ShipStation SKU is required" });
+    }
+
+    const product = await MasterProduct.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Master product not found" });
+    }
+
+    if (!product.channels) product.channels = {};
+
+    // Update ShipStation channel data
+    product.channels.shipstation = {
+      sku,
+      productId: productId || null, // Optional, depending on if you use SS internal IDs
+    };
+
+    await product.save();
+
+    res.json({
+      success: true,
+      message: "ShipStation product linked successfully",
+      product,
+    });
+  } catch (error) {
+    console.error("Link ShipStation Error:", error);
+    res.status(500).json({
+      message: "Failed to link ShipStation product",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * ✅ PATCH /api/master-products/:id/unlink-shipstation
+ */
+export const unlinkShipstationProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Use $unset to reliably remove the field
+    const product = await MasterProduct.findByIdAndUpdate(
+      id,
+      { $unset: { "channels.shipstation": "" } },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Master product not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "ShipStation product unlinked successfully",
+      product,
+    });
+  } catch (error) {
+    console.error("Unlink ShipStation Error:", error);
+    res.status(500).json({
+      message: "Failed to unlink ShipStation product",
+      error: error.message,
+    });
+  }
+};
