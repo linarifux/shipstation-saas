@@ -33,7 +33,7 @@ export default function LinkShopifyModal({
       setLoading(true);
 
       await axios.patch(
-        `http://localhost:5000/api/master-products/${selected}/link-shopify`,
+        `${import.meta.env.VITE_BACKEND_URL}/master-products/${selected}/link-shopify`,
         {
           sku: shopifyProduct.sku,
           productId: shopifyProduct.product_id,

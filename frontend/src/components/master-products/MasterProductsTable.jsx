@@ -1,4 +1,4 @@
-import { Boxes, Edit, Layers, ShoppingBag } from "lucide-react";
+import { Boxes, Edit, Layers, ShoppingBag, Link2 } from "lucide-react"; // ✅ Import Link2
 
 export default function MasterProductsTable({ products, refresh, openStockModal }) {
   
@@ -6,7 +6,7 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
 
   return (
     <>
-      {/* 🖥️ DESKTOP VIEW: Table (Hidden on Mobile) */}
+      {/* 🖥️ DESKTOP VIEW */}
       <div className="hidden md:block overflow-hidden bg-slate-900 rounded-xl border border-slate-800 shadow-xl">
         <table className="w-full text-sm text-left">
           <thead className="bg-slate-800 text-slate-300">
@@ -53,14 +53,14 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
         </table>
       </div>
 
-      {/* 📱 MOBILE VIEW: Cards (Hidden on Desktop) */}
+      {/* 📱 MOBILE VIEW */}
       <div className="md:hidden flex flex-col gap-4">
         {products.map((p) => (
           <div 
             key={p._id} 
             className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg flex flex-col gap-4"
           >
-            {/* Header: Name & SKU */}
+            {/* Header */}
             <div className="flex justify-between items-start">
               <div>
                 <h3 className="text-lg font-bold text-slate-100 leading-tight mb-1">{p.name}</h3>
@@ -75,7 +75,6 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 gap-3">
-              {/* Available Stock */}
               <div className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 flex flex-col items-center justify-center text-center">
                 <span className="text-[10px] uppercase text-slate-500 font-bold tracking-wider mb-1 flex items-center gap-1">
                   <Boxes size={12} /> Available
@@ -85,7 +84,6 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
                 </span>
               </div>
 
-              {/* Channels */}
               <div className="bg-slate-950/50 p-3 rounded-lg border border-slate-800 flex flex-col items-center justify-center text-center">
                 <span className="text-[10px] uppercase text-slate-500 font-bold tracking-wider mb-1 flex items-center gap-1">
                   <Layers size={12} /> Channels
@@ -110,12 +108,15 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
   );
 }
 
-/* Helper: Channel Badges */
+/* ✅ UPDATED Helper: Channel Badges */
 function ChannelBadges({ channels, small }) {
   if (!channels) return <span className="text-slate-600 text-xs italic">No channels</span>;
 
   const activeChannels = [];
+  
+  // Checks
   if (channels.shopify?.sku) activeChannels.push("Shopify");
+  if (channels.shipstation?.sku) activeChannels.push("ShipStation"); // ✅ Added Check
   if (channels.amazon?.sku) activeChannels.push("Amazon");
   if (channels.walmart?.sku) activeChannels.push("Walmart");
 
@@ -133,7 +134,10 @@ function ChannelBadges({ channels, small }) {
             rounded border bg-indigo-500/10 text-indigo-400 border-indigo-500/20 flex items-center gap-1
           `}
         >
+          {/* Icons based on channel name */}
           {c === "Shopify" && <ShoppingBag size={small ? 10 : 12} />}
+          {c === "ShipStation" && <Link2 size={small ? 10 : 12} />} {/* ✅ Added Icon */}
+          
           {c}
         </span>
       ))}

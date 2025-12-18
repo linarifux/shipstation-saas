@@ -18,7 +18,7 @@ export default function AddProductModal({ open, onClose, onCreated }) {
 
   async function fetchWarehouses() {
     try {
-      const res = await axios.get("http://localhost:5000/api/warehouses");
+      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/warehouse`);
       setWarehouses(res.data.warehouses || []);
     } catch (e) {
       console.log(e);
@@ -35,7 +35,7 @@ export default function AddProductModal({ open, onClose, onCreated }) {
   const handleCreate = async () => {
     if (!form.name || !form.masterSku) return;
 
-    await axios.post("http://localhost:5000/api/master-products", {
+    await axios.post(`${import.meta.env.VITE_BACKEND_URL}/master-products`, {
       ...form,
       locations
     });
