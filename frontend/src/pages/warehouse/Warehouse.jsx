@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import { useDispatch, useSelector } from "react-redux"; // Redux Hooks
 import { HashLoader } from "react-spinners";
+import { fetchWarehouses } from "../../store/slices/warehouseSlice"; // Import Action
 
 import WarehouseTable from "./components/WarehouseTable";
 import WarehouseDrawer from "./components/WarehouseDrawer";
@@ -9,35 +10,24 @@ import EmptyState from "./components/EmptyState";
 import AddWarehouseModal from "./components/AddWarehouseModal";
 
 export default function Warehouses() {
-  const [warehouses, setWarehouses] = useState([]);
-  const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const dispatch = useDispatch();
+  
+  // 1. Select State
+  const { items: warehouses, loading, error } = useSelector((state) => state.warehouse);
 
+  const [search, setSearch] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedWarehouse, setSelectedWarehouse] = useState(null);
-
   const [openAdd, setOpenAdd] = useState(false);
 
-  const fetchWarehouses = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const res = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/warehouse`); // ✅ FIXED ENDPOINT
-
-      setWarehouses(res.data?.warehouses || []);
-    } catch (err) {
-      setError("Failed to load warehouses. Check database or server.");
-      setWarehouses([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // 2. Initial Fetch
   useEffect(() => {
-    fetchWarehouses();
-  }, []);
+    dispatch(fetchWarehouses());
+  }, [dispatch]);
+
+  const handleRefresh = () => {
+    dispatch(fetchWarehouses());
+  };
 
   const filtered = warehouses.filter((w) =>
     w?.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -50,33 +40,24 @@ export default function Warehouses() {
     setDrawerOpen(true);
   };
 
-  /* ✅ SHOW SPINNER */
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh]">
-        <HashLoader size={50} color="#06b6d4" />
-      </div>
-    );
-  }
-
   return (
     <div className="p-6 text-slate-100">
 
-      {/* HEADER */}
+      {/* HEADER (Always Visible) */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-semibold">🏢 Warehouses</h1>
 
         <div className="flex gap-3">
           <button
-            onClick={fetchWarehouses}
-            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg shadow"
+            onClick={handleRefresh}
+            className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 rounded-lg shadow transition-colors"
           >
             Refresh
           </button>
 
           <button
             onClick={() => setOpenAdd(true)}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow"
+            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg shadow transition-colors"
           >
             + Add Warehouse
           </button>
@@ -93,14 +74,22 @@ export default function Warehouses() {
         </div>
       )}
 
-      {/* CONTENT */}
-      {filtered.length === 0 ? (
-        <EmptyState isLoading={loading} />
+      {/* CONTENT WITH LOADER */}
+      {loading ? (
+        <div className="flex items-center justify-center h-[50vh]">
+          <HashLoader size={50} color="#06b6d4" />
+        </div>
       ) : (
-        <WarehouseTable
-          warehouses={filtered}
-          onSelect={openDrawer}
-        />
+        <>
+          {filtered.length === 0 ? (
+            <EmptyState isLoading={loading} />
+          ) : (
+            <WarehouseTable
+              warehouses={filtered}
+              onSelect={openDrawer}
+            />
+          )}
+        </>
       )}
 
       {/* DRAWER */}
@@ -114,7 +103,7 @@ export default function Warehouses() {
       <AddWarehouseModal
         open={openAdd}
         onClose={() => setOpenAdd(false)}
-        onCreated={fetchWarehouses}
+        onCreated={handleRefresh} // Dispatch refresh on success
       />
     </div>
   );
