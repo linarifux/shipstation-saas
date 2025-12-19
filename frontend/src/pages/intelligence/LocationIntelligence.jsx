@@ -26,8 +26,8 @@ export default function LocationIntelligence() {
     async function loadData() {
         try {
             setLoading(true);
-            const s = await axios.get("http://localhost:5000/shipments");
-            const w = await axios.get("http://localhost:5000/warehouses");
+            const s = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/shipments`);
+            const w = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/warehouse`);
 
             const shipments = s.data.shipments || [];
             const warehouses = w.data.warehouses || [];

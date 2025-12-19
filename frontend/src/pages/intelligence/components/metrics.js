@@ -5,6 +5,8 @@ export function groupOrdersByCity(shipments = []) {
   const cityMap = {};
 
   shipments.forEach((s) => {
+    console.log(s);
+    
     const city = s.ship_to?.city_locality;
     const country = s.ship_to?.country_code;
 
