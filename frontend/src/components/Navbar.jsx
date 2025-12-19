@@ -10,7 +10,10 @@ export default function Navbar() {
         
         {/* Logo */}
         <Link to="/" className="text-xl font-bold tracking-wide">
-          ShipStation App
+          <div className="flex items-center space-x-2">
+            <img src="./public/shipflow.png" alt="ShipFlow Logo" className="size-12" />
+            <span className="text-4xl">ShipFlow</span>
+          </div>
         </Link>
 
         {/* Desktop Links */}

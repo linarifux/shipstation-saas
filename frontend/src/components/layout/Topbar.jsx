@@ -20,7 +20,7 @@ const pageTitles = {
 export default function Topbar({ toggleSidebar }) {
   const { pathname } = useLocation();
 
-  const pageTitle = pageTitles[pathname] || "ShipFlow";
+  const pageTitle = pageTitles[pathname] || "Welcome";
 
   // Breadcrumb generator
   const breadcrumbs = pathname

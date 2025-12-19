@@ -22,7 +22,7 @@ export default function Sidebar({ collapsed, toggle }) {
       <div className="flex items-center justify-between px-4 py-5 border-b border-slate-800">
         {!collapsed && (
           <h1 className="text-xl font-bold text-white tracking-wide">
-            ShipFlow
+            Menu
           </h1>
         )}
 
