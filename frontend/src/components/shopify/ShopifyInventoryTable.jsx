@@ -1,16 +1,20 @@
 import { useState } from "react";
 import ShopifyInventoryRow from "./ShopifyInventoryRow";
 import { getMasterMatch } from "../../utils/getMasterMatch";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { Package, MapPin, Link2, AlertCircle, ArrowUpDown, Unlink, Loader2 } from "lucide-react";
+import axios from "axios"; // Only needed for the local unlink helper if not in Redux yet
+import { 
+  Package, MapPin, Link2, AlertCircle, ArrowUpDown, 
+  Unlink, Loader2, Edit2, Check, X as XIcon 
+} from "lucide-react";
 
 export default function ShopifyInventoryTable({
   products = [],
   masterProducts = [],
   locations = {},
-  onUpdate,
-  onSync,
+  onUpdate,     // ✅ Redux Action from Parent
+  onUpdateSku,  // ✅ Redux Action from Parent
+  onSync,       // ✅ Redux Action from Parent
   onLink,
   refresh,
 }) {
@@ -22,7 +26,7 @@ export default function ShopifyInventoryTable({
     );
   }
 
-  /* ✅ UNLINK HELPER */
+  // Helper for unlinking (can remain local or move to Redux later)
   async function unlinkShopify(masterId) {
     if (!masterId) return;
     try {
@@ -34,7 +38,7 @@ export default function ShopifyInventoryTable({
           error: 'Failed to unlink this product',
         }
       );
-      refresh && refresh();
+      if (refresh) refresh();
     } catch (error) {
       console.error("Unlink failed", error);
     }
@@ -42,7 +46,7 @@ export default function ShopifyInventoryTable({
 
   return (
     <>
-      {/* 🖥️ DESKTOP VIEW: Table (Hidden on Mobile) */}
+      {/* 🖥️ DESKTOP VIEW: Table */}
       <div className="hidden md:block overflow-x-auto bg-slate-900 rounded-xl border border-slate-800">
         <table className="w-full text-sm text-left">
           <thead className="bg-slate-800 text-slate-300">
@@ -70,6 +74,7 @@ export default function ShopifyInventoryTable({
                     locationName={locationName}
                     master={master}
                     onUpdate={onUpdate}
+                    onUpdateSku={onUpdateSku} /* ✅ Uses Prop (Redux) */
                     onSync={() => {
                       if (!master) return toast.error("No master product linked");
                       return onSync(master);
@@ -87,7 +92,7 @@ export default function ShopifyInventoryTable({
         </table>
       </div>
 
-      {/* 📱 MOBILE VIEW: Cards (Hidden on Desktop) */}
+      {/* 📱 MOBILE VIEW: Cards */}
       <div className="md:hidden flex flex-col gap-4">
         {products.map((item, index) => {
           if (!item?.levels || item.levels.length === 0) return null;
@@ -103,6 +108,7 @@ export default function ShopifyInventoryTable({
                 locationName={locationName}
                 master={master}
                 onUpdate={onUpdate}
+                onUpdateSku={onUpdateSku} /* ✅ Uses Prop (Redux) */
                 onSync={onSync}
                 onLink={onLink}
                 onUnlink={unlinkShopify}
@@ -116,13 +122,20 @@ export default function ShopifyInventoryTable({
 }
 
 /* 📱 MOBILE CARD COMPONENT */
-function MobileInventoryCard({ product, level, locationName, master, onUpdate, onSync, onLink, onUnlink }) {
+function MobileInventoryCard({ product, level, locationName, master, onUpdate, onUpdateSku, onSync, onLink, onUnlink }) {
   const [qty, setQty] = useState(level.available);
+  
+  // ✅ SKU Edit State
+  const [sku, setSku] = useState(product.sku || ""); 
+  const [isEditingSku, setIsEditingSku] = useState(false);
+  const [updatingSku, setUpdatingSku] = useState(false);
+
+  // Other Loading States
   const [updating, setUpdating] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
 
-  const isBusy = updating || syncing || unlinking;
+  const isBusy = updating || syncing || unlinking || updatingSku;
 
   async function handleUpdate() {
     if (qty === "" || isNaN(qty)) return toast.error("Enter a valid quantity");
@@ -134,6 +147,25 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
         error: "Failed",
       });
     } finally { setUpdating(false); }
+  }
+
+  // ✅ SKU Save Handler (Uses Redux via Prop)
+  async function handleSkuSave() {
+    if (!sku || sku.trim() === "") return toast.error("SKU cannot be empty");
+    try {
+      setUpdatingSku(true);
+      
+      // Call Redux Action passed from Parent
+      await onUpdateSku(product.inventory_item_id, sku);
+      
+      toast.success("SKU Updated");
+      setIsEditingSku(false);
+    } catch(err) {
+      console.error(err);
+      toast.error("Failed to update SKU");
+    } finally { 
+      setUpdatingSku(false); 
+    }
   }
 
   async function handleSync() {
@@ -173,13 +205,50 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
       
       {/* Header: Title & SKU */}
       <div className="mb-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="text-slate-100 font-semibold text-base leading-snug">{product.title}</h3>
-          <span className="bg-slate-800 text-slate-400 text-[10px] px-1.5 py-0.5 rounded border border-slate-700 font-mono whitespace-nowrap">
-            {product.sku}
-          </span>
+        <h3 className="text-slate-100 font-semibold text-base leading-snug mb-2">{product.title}</h3>
+        
+        {/* ✅ SKU Section with Edit Mode */}
+        <div className="flex items-center justify-between h-8">
+          {isEditingSku ? (
+             <div className="flex items-center gap-2 w-full animate-in fade-in duration-200">
+               <input 
+                 value={sku}
+                 onChange={(e) => setSku(e.target.value)}
+                 className="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white w-full focus:border-cyan-500 outline-none font-mono"
+                 placeholder="Enter SKU"
+                 autoFocus
+               />
+               <button 
+                 onClick={handleSkuSave} 
+                 disabled={updatingSku}
+                 className="bg-emerald-600 p-1.5 rounded text-white hover:bg-emerald-500 disabled:opacity-50"
+               >
+                 {updatingSku ? <Loader2 size={12} className="animate-spin"/> : <Check size={12} />}
+               </button>
+               <button 
+                 onClick={() => { setIsEditingSku(false); setSku(product.sku || ""); }} 
+                 className="bg-slate-700 p-1.5 rounded text-white hover:bg-slate-600"
+               >
+                 <XIcon size={12} />
+               </button>
+             </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="bg-slate-800 text-slate-400 text-[10px] px-1.5 py-0.5 rounded border border-slate-700 font-mono whitespace-nowrap">
+                {product.sku || "NO SKU"}
+              </span>
+              <button 
+                onClick={() => setIsEditingSku(true)} 
+                className="text-slate-500 hover:text-cyan-400 transition-colors"
+                title="Edit SKU"
+              >
+                <Edit2 size={12} />
+              </button>
+            </div>
+          )}
         </div>
-        <div className="flex items-center gap-1 text-slate-500 text-xs mt-1">
+
+        <div className="flex items-center gap-1 text-slate-500 text-xs mt-2">
           <MapPin size={12} />
           {locationName || level.location_id}
         </div>
@@ -192,7 +261,6 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
           <div className="text-xl font-bold text-cyan-400">{level.available}</div>
         </div>
         
-        {/* Linked Master Status */}
         <div>
            <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Linked Master</label>
            {master ? (
@@ -228,7 +296,7 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
           </button>
         </div>
 
-        {/* Master Actions (Sync/Link/Unlink) */}
+        {/* Master Actions */}
         <div className="flex gap-2">
           {master ? (
             <>

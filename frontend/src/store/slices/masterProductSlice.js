@@ -14,6 +14,23 @@ export const fetchMasterProducts = createAsyncThunk(
   }
 );
 
+
+// ✅ Add deleteMasterProduct
+export const deleteMasterProduct = createAsyncThunk(
+  "masterProducts/delete",
+  async (id, { dispatch, rejectWithValue }) => {
+    try {
+      await axios.delete(`${import.meta.env.VITE_BACKEND_URL}/master-products/${id}`);
+      dispatch(fetchMasterProducts()); // Refresh list
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to delete product");
+    }
+  }
+);
+
+
+
 // 2. Create the Slice
 const masterProductSlice = createSlice({
   name: "masterProducts",

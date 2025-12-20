@@ -56,7 +56,7 @@ export const getShopifyInventory = async (req, res) => {
 
 
 /* --------------------------------------------------
-   UPDATE SHOPIFY INVENTORY
+   UPDATE SHOPIFY INVENTORY (QUANTITY)
 -------------------------------------------------- */
 export const updateShopifyInventory = async (req, res) => {
   try {
@@ -132,7 +132,7 @@ export const getShopifyLocations = async (req, res) => {
 
 
 /* --------------------------------------------------
-   🔥 RESOLVE INVENTORY ITEM BY SKU (IMPORTANT FIX)
+   🔥 RESOLVE INVENTORY ITEM BY SKU
 -------------------------------------------------- */
 async function findInventoryItemBySKU(sku) {
   let page = 1;
@@ -225,5 +225,42 @@ export const syncInventoryFromMaster = async (req, res) => {
   } catch (error) {
     console.error("Sync Error:", error.response?.data || error.message);
     res.status(500).json({ message: "Failed to sync inventory" });
+  }
+};
+
+/* --------------------------------------------------
+   ✏️ UPDATE SHOPIFY SKU
+-------------------------------------------------- */
+export const updateShopifySku = async (req, res) => {
+  console.log(req);
+  
+  try {
+    const { inventory_item_id, sku } = req.body;
+
+    if (!inventory_item_id || !sku) {
+      return res.status(400).json({ message: "Inventory Item ID and SKU are required" });
+    }
+
+    // Shopify API Request
+    await axios.put(
+      `${BASE}/inventory_items/${inventory_item_id}.json`,
+      {
+        inventory_item: {
+          id: inventory_item_id,
+          sku: sku,
+        },
+      },
+      { headers }
+    );
+
+    res.json({ success: true, message: "SKU updated successfully" });
+  } catch (error) {
+    console.log(error);
+    
+    console.error("Shopify SKU Update Error:", error.response?.data || error.message);
+    res.status(500).json({
+      message: "Failed to update SKU on Shopify",
+      error: error.response?.data || error.message,
+    });
   }
 };

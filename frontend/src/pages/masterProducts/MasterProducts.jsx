@@ -3,10 +3,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchMasterProducts } from "../../store/slices/masterProductSlice";
 import { HashLoader } from "react-spinners";
 import { Package, RefreshCw, Plus } from "lucide-react";
+import toast from "react-hot-toast";
 
 import MasterProductsTable from "../../components/master-products/MasterProductsTable";
 import AddProductModal from "../../components/master-products/AddProductModal";
 import AddStockModal from "../../components/master-products/AddStockModal";
+import { deleteMasterProduct } from "../../store/slices/masterProductSlice"; 
 
 export default function MasterProducts() {
   const dispatch = useDispatch();
@@ -24,6 +26,18 @@ export default function MasterProducts() {
   const handleRefresh = () => {
     dispatch(fetchMasterProducts());
   };
+
+  const handleDelete = async (id) => {
+    
+  toast.promise(
+    dispatch(deleteMasterProduct(id)).unwrap(),
+    {
+      loading: 'Deleting...',
+      success: 'Product deleted successfully',
+      error: (err) => `Failed: ${err}`
+    }
+  );
+};
 
   return (
     <div className="p-4 md:p-6 text-slate-100 max-w-full pb-20">
@@ -72,6 +86,7 @@ export default function MasterProducts() {
             <MasterProductsTable
               products={products}
               refresh={handleRefresh}
+              onDelete={handleDelete} 
               openStockModal={(product) => {
                 setSelectedProduct(product);
                 setStockModalOpen(true);

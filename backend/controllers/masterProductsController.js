@@ -180,6 +180,22 @@ export const createMasterProduct = async (req, res) => {
   }
 };
 
+
+/**
+ * ✅ DELETE /api/master-products/:id
+ */
+// backend/controllers/masterProductController.js
+export const deleteMasterProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await MasterProduct.findByIdAndDelete(id);
+    res.json({ success: true, message: "Product deleted" });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+
 /**
  * ✅ PATCH /api/master-products/:id/add-stock
  */
@@ -481,3 +497,4 @@ export const unlinkAmazonProduct = async (req, res) => {
     });
   }
 };
+

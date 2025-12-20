@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link2, ArrowUpDown, Unlink, Loader2 } from "lucide-react";
-import toast from "react-hot-toast"; // 1. Import toast
+import { Link2, AlertCircle, RefreshCw, Loader2, Edit2, Check, X } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function ShopifyInventoryRow({
   product,
@@ -8,203 +8,163 @@ export default function ShopifyInventoryRow({
   locationName,
   master,
   onUpdate,
+  onUpdateSku, // ✅ Receives the API function
   onSync,
   onLink,
   onUnlink,
 }) {
   const [qty, setQty] = useState(level.available);
+  const [loading, setLoading] = useState(false);
+  
+  // ✅ SKU Edit State
+  const [isEditingSku, setIsEditingSku] = useState(false);
+  const [sku, setSku] = useState(product.sku);
+  const [savingSku, setSavingSku] = useState(false);
 
-  const [updating, setUpdating] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [unlinking, setUnlinking] = useState(false);
-
-  const isBusy = updating || syncing || unlinking;
-
-  async function handleUpdate() {
-    // 2. Replace alert with toast error
-    if (qty === "" || isNaN(qty)) {
-      toast.error("Enter a valid quantity");
-      return;
-    }
-
+  const handleUpdateStock = async () => {
     try {
-      setUpdating(true);
-      
-      // 3. Wrap the async update in a promise toast
-      await toast.promise(
-        onUpdate(product.inventory_item_id, level.location_id, qty),
-        {
-          loading: "Updating quantity...",
-          success: "Quantity updated",
-          error: "Failed to update quantity",
-        }
-      );
+      setLoading(true);
+      await onUpdate(product.inventory_item_id, level.location_id, qty);
+      toast.success("Stock updated");
     } catch (err) {
-      console.error(err);
+      toast.error("Failed to update");
     } finally {
-      setUpdating(false);
+      setLoading(false);
     }
-  }
+  };
 
-  async function handleSync() {
-    if (!master) return;
-
+  const handleSaveSku = async () => {
+    if (!sku || !sku.trim()) return toast.error("SKU cannot be empty");
+    
     try {
-      setSyncing(true);
-      
-      // 4. Wrap sync action in promise toast
-      await toast.promise(onSync(), {
-        loading: "Syncing with master...",
-        success: "Sync complete",
-        error: "Sync failed",
-      });
+      setSavingSku(true);
+      await onUpdateSku(product.inventory_item_id, sku);
+      setIsEditingSku(false);
     } catch (err) {
-      console.error(err);
+      // Error handled by parent toast
     } finally {
-      setSyncing(false);
+      setSavingSku(false);
     }
-  }
+  };
 
-  function handleUnlink() {
-    if (!master) return;
-
-    // Trigger a custom toast
-    toast(
-      (t) => (
-        <div className="flex flex-col gap-2">
-          <span className="font-medium text-sm">
-            Unlink from <span className="font-bold">{master.name}</span>?
-          </span>
-          <div className="flex gap-2 mt-1">
-            <button
-              onClick={() => {
-                toast.dismiss(t.id); // Close the confirmation toast
-                executeUnlink();     // Run the actual unlink logic
-              }}
-              className="bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded transition"
-            >
-              Yes, Unlink
-            </button>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              className="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded transition"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ),
-      {
-        duration: 5000, // Keep it open longer so user has time to decide
-        style: {
-          background: '#1e293b', // slate-800
-          color: '#fff',
-          border: '1px solid #334155', // slate-700
-        },
-      }
-    );
-  }
-
-  // ✅ Separate the actual async logic into its own function
-  async function executeUnlink() {
-    try {
-      setUnlinking(true);
-      await onUnlink(master._id);
-    } finally {
-      setUnlinking(false);
-    }
-  }
+  const handleCancelSku = () => {
+    setSku(product.sku);
+    setIsEditingSku(false);
+  };
 
   return (
-    <tr className="border-t border-slate-800 hover:bg-slate-800/40 transition">
-
-      {/* PRODUCT TITLE */}
-      <td className="p-3 font-medium">
-        <div>{product.title}</div>
-        <div className="text-[10px] text-slate-500">
-          {product.product_id}
-        </div>
+    <tr className="border-t border-slate-800 hover:bg-slate-800/30 transition-colors">
+      {/* Product Name */}
+      <td className="p-3 font-medium text-slate-200 max-w-xs truncate" title={product.title}>
+        {product.title}
       </td>
 
-      {/* SKU */}
-      <td className="p-3 text-xs font-mono">{product.sku}</td>
-
-      {/* LOCATION */}
-      <td className="p-3">
-        {locationName || (
-          <span className="text-slate-500">{level.location_id}</span>
-        )}
-      </td>
-
-      {/* CURRENT QTY */}
-      <td className="p-3 font-bold text-cyan-400">
-        {level.available}
-      </td>
-
-      {/* MASTER LINK STATUS */}
-      <td className="p-3">
-        {master ? (
-          <div className="flex flex-col gap-2">
-
-            <span className="text-green-400 text-xs flex items-center gap-1">
-              <Link2 size={12} /> {master.name}
-            </span>
-
-            <button
-              onClick={handleSync}
-              disabled={isBusy}
-              className="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 px-2 py-1 rounded text-xs transition-colors"
+      {/* ✅ SKU (Editable) */}
+      <td className="p-3 font-mono text-slate-400">
+        {isEditingSku ? (
+          <div className="flex items-center gap-2">
+            <input 
+              value={sku}
+              onChange={(e) => setSku(e.target.value)}
+              className="w-32 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-xs text-white focus:border-cyan-500 outline-none"
+              autoFocus
+            />
+            <button 
+              onClick={handleSaveSku}
+              disabled={savingSku}
+              className="bg-emerald-600 p-1 rounded text-white hover:bg-emerald-500 disabled:opacity-50"
+              title="Save SKU"
             >
-              {syncing ? (
-                <Loader2 size={12} className="animate-spin" />
-              ) : (
-                <ArrowUpDown size={12} />
-              )}
-              Sync
+              {savingSku ? <Loader2 size={12} className="animate-spin"/> : <Check size={12} />}
             </button>
-
-            <button
-              onClick={handleUnlink}
-              disabled={isBusy}
-              className="flex items-center gap-1 text-red-400 hover:text-red-500 disabled:opacity-50 text-xs transition-colors"
+            <button 
+              onClick={handleCancelSku}
+              className="bg-slate-700 p-1 rounded text-white hover:bg-slate-600"
+              title="Cancel SKU"
             >
-              <Unlink size={12} />
-              {unlinking ? "..." : "Unlink"}
+              <X size={12} />
             </button>
           </div>
         ) : (
-          <button
-            onClick={() => onLink(product)}
-            disabled={isBusy}
-            className="bg-cyan-700 hover:bg-cyan-800 px-2 py-1 text-xs rounded disabled:opacity-50 transition-colors"
-          >
-            Link Product
-          </button>
+          <div className="flex items-center gap-2 group">
+            <span>{product.sku || "NO SKU"}</span>
+            <button 
+              onClick={() => setIsEditingSku(true)}
+              className="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-cyan-400 transition-opacity"
+              title="Edit SKU"
+            >
+              <Edit2 size={12} />
+            </button>
+          </div>
         )}
       </td>
 
-      {/* NEW QTY INPUT */}
-      <td className="p-3">
-        <input
-          type="number"
-          min="0"
-          value={qty}
-          onChange={(e) => setQty(e.target.value)}
-          className="w-24 px-2 py-1 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-600"
-        />
+      {/* Location */}
+      <td className="p-3 text-slate-400 text-xs">
+        {locationName || <span className="font-mono">{level.location_id}</span>}
       </td>
 
-      {/* UPDATE BUTTON */}
-      <td className="p-3">
-        <button
-          onClick={handleUpdate}
-          disabled={updating || qty === ""}
-          className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 px-3 py-1 rounded text-sm transition-colors flex items-center justify-center min-w-[70px]"
-        >
-          {updating ? <Loader2 size={14} className="animate-spin" /> : "Update"}
-        </button>
+      {/* Current Qty */}
+      <td className="p-3 text-cyan-400 font-bold">
+        {level.available}
       </td>
 
+      {/* Master Link Status */}
+      <td className="p-3">
+        {master ? (
+          <div className="flex items-center gap-2">
+            <Link2 size={14} className="text-emerald-500" />
+            <span className="text-emerald-400 text-xs truncate max-w-[150px]">{master.name}</span>
+            <button 
+              onClick={onUnlink}
+              className="text-[10px] text-slate-500 hover:text-red-400 underline ml-2"
+            >
+              Unlink
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <AlertCircle size={14} className="text-slate-600" />
+            <button 
+              onClick={onLink}
+              className="text-xs text-slate-500 hover:text-cyan-400 underline"
+            >
+              Link Now
+            </button>
+          </div>
+        )}
+      </td>
+
+      {/* Update Input */}
+      <td className="p-3">
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+            className="w-16 bg-slate-950 border border-slate-700 rounded px-2 py-1 text-center text-xs focus:border-cyan-500 outline-none"
+          />
+          <button
+            onClick={handleUpdateStock}
+            disabled={loading}
+            className="bg-cyan-600 hover:bg-cyan-700 text-white p-1.5 rounded disabled:opacity-50"
+          >
+            {loading ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+          </button>
+        </div>
+      </td>
+
+      {/* Sync Action */}
+      <td className="p-3 text-right">
+        {master && (
+          <button
+            onClick={onSync}
+            className="text-xs bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 px-2 py-1 rounded transition-colors"
+          >
+            Sync from Master
+          </button>
+        )}
+      </td>
     </tr>
   );
 }

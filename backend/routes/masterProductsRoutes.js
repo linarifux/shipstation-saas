@@ -1,10 +1,11 @@
 import express from "express";
-import { addStockToMasterProduct, createMasterProduct, getAllMasterProducts, linkShipstationProduct, linkShopifyProduct, unlinkShipstationProduct, unlinkShopifyProduct } from "../controllers/masterProductsController.js";
+import { addStockToMasterProduct, createMasterProduct, deleteMasterProduct, getAllMasterProducts, linkShipstationProduct, linkShopifyProduct, unlinkShipstationProduct, unlinkShopifyProduct } from "../controllers/masterProductsController.js";
 
 const router = express.Router();
 
 router.get("/", getAllMasterProducts)
 router.post("/", createMasterProduct)
+router.delete('/:id', deleteMasterProduct)
 router.patch("/:id/add-stock", addStockToMasterProduct)
 
 // ✅ Shopify Linking Routes

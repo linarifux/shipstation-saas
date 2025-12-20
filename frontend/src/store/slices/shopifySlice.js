@@ -14,7 +14,7 @@ export const fetchShopifyInventory = createAsyncThunk(
     try {
       // We fetch the master products which contain the enriched shopify levels (with location names)
       const response = await axios.get(`${BACKEND_URL}/shopify/inventory`);
-      return response.data.products; 
+      return response.data.products;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to fetch inventory");
     }
@@ -46,16 +46,36 @@ export const syncShopifyToMaster = createAsyncThunk(
   async (masterProduct, { dispatch, rejectWithValue }) => {
     try {
       if (!masterProduct?.channels?.shopify?.sku) throw new Error("Not linked to Shopify");
-      
+
       await axios.post(`${BACKEND_URL}/shopify/inventory/sync`, {
         sku: masterProduct.channels.shopify.sku,
         quantity: masterProduct.totalAvailable,
       });
-      
+
       dispatch(fetchShopifyInventory());
       return masterProduct._id;
     } catch (error) {
       return rejectWithValue(error.message || "Failed to sync");
+    }
+  }
+);
+
+export const updateShopifySku = createAsyncThunk(
+  "shopify/updateSku",
+  async ({ inventory_item_id, sku }, { dispatch, rejectWithValue }) => {
+ 
+    try {
+      await axios.post(`${BACKEND_URL}/shopify/update-sku`, {
+        inventory_item_id,
+        sku
+      });
+
+      // Successfully updated? Refresh the inventory list to reflect changes
+      dispatch(fetchShopifyInventory());
+
+      return { inventory_item_id, sku };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || "Failed to update SKU");
     }
   }
 );
@@ -79,6 +99,9 @@ const shopifySlice = createSlice({
         state.loading = true;
         state.error = null;
       })
+      .addCase(updateShopifySku.rejected, (state, action) => {
+        state.error = action.payload;
+      })
       .addCase(fetchShopifyInventory.fulfilled, (state, action) => {
         state.loading = false;
         state.products = action.payload;
@@ -101,6 +124,7 @@ const shopifySlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       });
+
   },
 });
 

@@ -4,7 +4,8 @@ import {
   getShopifyInventory,
   updateShopifyInventory,
   getShopifyLocations,
-  syncInventoryFromMaster
+  syncInventoryFromMaster,
+  updateShopifySku
 } from "../controllers/shopifyController.js";
 
 const router = express.Router();
@@ -25,5 +26,8 @@ router.post("/inventory/sync", syncInventoryFromMaster);
 
 // Get Shopify locations
 router.get("/locations", getShopifyLocations);
+
+// update shopify sku
+router.post('/update-sku', updateShopifySku )
 
 export default router;
