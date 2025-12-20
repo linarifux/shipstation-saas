@@ -73,10 +73,15 @@ export const getAllMasterProducts = async (req, res) => {
       const internalLocationNames = new Set(); // To track names for exclusion
 
       const internalTotal = (p.locations || []).reduce((sum, loc) => {
-        // Store the warehouse name in our Set (lowercase for safe comparison)
-        if (loc.warehouse && loc.warehouse.name) {
-          internalLocationNames.add(loc.warehouse.name.toLowerCase().trim());
+        // ✅ FIX: Skip if warehouse is null (deleted) or missing properties
+        if (!loc.warehouse || !loc.warehouse.name) {
+          return sum; // Do NOT add this stock
         }
+
+        // Store the warehouse name in our Set (lowercase for safe comparison)
+        internalLocationNames.add(loc.warehouse.name.toLowerCase().trim());
+        
+        // Add to sum only if valid
         return sum + (Number(loc.available) || 0);
       }, 0);
 
@@ -128,7 +133,7 @@ export const getAllMasterProducts = async (req, res) => {
         ...p,
         internalTotal,
         shopifyTotal,
-        totalAvailable, // ✅ Correctly excludes duplicates
+        totalAvailable, // ✅ Correctly excludes duplicates & deleted warehouses
         shopifyLevels,
       };
     });
@@ -399,6 +404,79 @@ export const unlinkShipstationProduct = async (req, res) => {
     console.error("Unlink ShipStation Error:", error);
     res.status(500).json({
       message: "Failed to unlink ShipStation product",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * ✅ PATCH /api/master-products/:id/link-amazon
+ */
+export const linkAmazonProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { sku, asin } = req.body;
+
+    if (!sku) {
+      return res.status(400).json({ message: "Amazon SKU is required" });
+    }
+
+    const product = await MasterProduct.findById(id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Master product not found" });
+    }
+
+    if (!product.channels) product.channels = {};
+
+    // Update Amazon channel data
+    product.channels.amazon = {
+      sku,
+      asin: asin || null,
+    };
+
+    await product.save();
+
+    res.json({
+      success: true,
+      message: "Amazon product linked successfully",
+      product,
+    });
+  } catch (error) {
+    console.error("Link Amazon Error:", error);
+    res.status(500).json({
+      message: "Failed to link Amazon product",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * ✅ PATCH /api/master-products/:id/unlink-amazon
+ */
+export const unlinkAmazonProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await MasterProduct.findByIdAndUpdate(
+      id,
+      { $unset: { "channels.amazon": "" } },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ message: "Master product not found" });
+    }
+
+    res.json({
+      success: true,
+      message: "Amazon product unlinked successfully",
+      product,
+    });
+  } catch (error) {
+    console.error("Unlink Amazon Error:", error);
+    res.status(500).json({
+      message: "Failed to unlink Amazon product",
       error: error.message,
     });
   }

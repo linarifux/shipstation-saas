@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Boxes, Edit, Layers, ShoppingBag, Link2, MapPin, ChevronDown, ChevronUp, Warehouse } from "lucide-react";
+import { Boxes, Edit, Layers, ShoppingBag, Link2, ChevronDown, ChevronUp, Warehouse } from "lucide-react";
 
-export default function MasterProductsTable({ products, refresh, openStockModal }) {
+export default function MasterProductsTable({ products, openStockModal }) {
   // State to track expanded rows
   const [expandedRows, setExpandedRows] = useState(new Set());
 
@@ -31,8 +31,11 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
           <tbody>
             {products.map((p) => {
               const isExpanded = expandedRows.has(p._id);
-              // Check if we have ANY location data (Internal OR Shopify)
-              const hasInternal = p.locations && p.locations.length > 0;
+
+              // ✅ FILTER: Only show internal locations that have a valid warehouse reference
+              const validInternalLocations = (p.locations || []).filter(l => l.warehouse);
+              
+              const hasInternal = validInternalLocations.length > 0;
               const hasShopify = p.shopifyLevels && p.shopifyLevels.length > 0;
               const hasAnyStock = hasInternal || hasShopify;
 
@@ -82,7 +85,7 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
                   {isExpanded && (
                     <tr className="bg-slate-900/50 border-t border-slate-800/50">
                       <td colSpan="5" className="p-0">
-                        <div className="p-4 bg-slate-950/30 border-b border-slate-800 shadow-inner flex gap-8">
+                        <div className="p-4 bg-slate-950/30 border-b border-slate-800 shadow-inner flex gap-8 animate-in slide-in-from-top-1 duration-200">
                           
                           {/* 1. Internal Warehouses */}
                           {hasInternal && (
@@ -91,10 +94,10 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
                                 <Warehouse size={12} /> Internal Warehouses
                               </p>
                               <div className="flex flex-wrap gap-3">
-                                {p.locations.map((loc, idx) => (
+                                {validInternalLocations.map((loc, idx) => (
                                   <div key={idx} className="bg-slate-800 border border-slate-700 rounded px-3 py-2 flex flex-col min-w-[100px]">
-                                    <span className="text-slate-400 text-xs font-medium mb-1 truncate">
-                                      {loc.warehouse?.name || "Unknown"}
+                                    <span className="text-slate-400 text-xs font-medium mb-1 truncate max-w-[120px]" title={loc.warehouse?.name}>
+                                      {loc.warehouse?.name}
                                     </span>
                                     <span className="text-emerald-400 font-mono font-bold text-lg">
                                       {loc.available}
@@ -107,14 +110,14 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
 
                           {/* 2. Channel Locations (Shopify, etc.) */}
                           {hasShopify && (
-                            <div className="flex-1 border-l border-slate-800 pl-8">
+                            <div className={`flex-1 ${hasInternal ? "border-l border-slate-800 pl-8" : ""}`}>
                               <p className="text-xs uppercase text-slate-500 font-bold mb-2 flex items-center gap-2">
                                 <ShoppingBag size={12} /> Shopify Locations
                               </p>
                               <div className="flex flex-wrap gap-3">
                                 {p.shopifyLevels.map((lvl, idx) => (
                                   <div key={idx} className="bg-indigo-900/10 border border-indigo-500/20 rounded px-3 py-2 flex flex-col min-w-[100px] relative">
-                                    <span className="text-indigo-300 text-xs font-medium mb-1 truncate pr-4">
+                                    <span className="text-indigo-300 text-xs font-medium mb-1 truncate max-w-[120px]" title={lvl.location_name}>
                                       {lvl.location_name}
                                     </span>
                                     <span className="text-indigo-400 font-mono font-bold text-lg">
@@ -145,7 +148,11 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
       <div className="md:hidden flex flex-col gap-4">
         {products.map((p) => {
           const isExpanded = expandedRows.has(p._id);
-          const hasInternal = p.locations && p.locations.length > 0;
+
+          // ✅ FILTER: Mobile View
+          const validInternalLocations = (p.locations || []).filter(l => l.warehouse);
+
+          const hasInternal = validInternalLocations.length > 0;
           const hasShopify = p.shopifyLevels && p.shopifyLevels.length > 0;
           const hasAnyStock = hasInternal || hasShopify;
 
@@ -206,7 +213,7 @@ export default function MasterProductsTable({ products, refresh, openStockModal 
                         <Warehouse size={12} /> Internal Warehouses
                       </p>
                       <div className="space-y-1">
-                        {p.locations.map((loc, idx) => (
+                        {validInternalLocations.map((loc, idx) => (
                           <div key={idx} className="flex justify-between items-center text-sm border-b border-slate-800 last:border-0 pb-1 last:pb-0">
                             <span className="text-slate-300">{loc.warehouse?.name}</span>
                             <span className="font-mono text-emerald-400 font-bold">{loc.available}</span>

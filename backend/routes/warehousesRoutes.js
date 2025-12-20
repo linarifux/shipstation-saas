@@ -1,5 +1,6 @@
 import express from "express";
 import Warehouse from "../models/Warehouse.js";
+import MasterProduct from "../models/MasterProduct.js"; // ✅ Import MasterProduct
 
 const router = express.Router();
 
@@ -38,11 +39,26 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-/* ✅ DELETE */
+/* ✅ DELETE (Updated with Cleanup) */
 router.delete("/:id", async (req, res) => {
   try {
-    await Warehouse.findByIdAndDelete(req.params.id);
-    res.json({ success: true });
+    const { id } = req.params;
+
+    // 1. Delete the Warehouse document
+    const warehouse = await Warehouse.findByIdAndDelete(id);
+
+    if (!warehouse) {
+      return res.status(404).json({ success: false, message: "Warehouse not found" });
+    }
+
+    // 2. ✅ CLEANUP: Remove this warehouse from ALL Master Products
+    // This prevents the "Unknown" card issue by removing the inventory entry entirely.
+    await MasterProduct.updateMany(
+      { "locations.warehouse": id },
+      { $pull: { locations: { warehouse: id } } }
+    );
+
+    res.json({ success: true, message: "Warehouse deleted and inventory references removed." });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -85,7 +101,5 @@ router.post("/:id/add-stock", async (req, res) => {
     res.status(500).json({ success: false, message: "Failed to update stock" });
   }
 });
-
-
 
 export default router;

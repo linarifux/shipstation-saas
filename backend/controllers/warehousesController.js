@@ -21,3 +21,4 @@ export const getWarehouses = async (req, res) => {
         res.status(500).json({ success: false, message: "Failed to fetch warehouses" });
     }   
 }
+
