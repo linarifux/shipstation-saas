@@ -1,10 +1,10 @@
 import { useState } from "react";
 import ShopifyInventoryRow from "./ShopifyInventoryRow";
 import { getMasterMatch } from "../../utils/getMasterMatch";
+import axios from "axios";
 import toast from "react-hot-toast";
-import axios from "axios"; // Only needed for the local unlink helper if not in Redux yet
 import { 
-  Package, MapPin, Link2, AlertCircle, ArrowUpDown, 
+  MapPin, Link2, AlertCircle, 
   Unlink, Loader2, Edit2, Check, X as XIcon 
 } from "lucide-react";
 
@@ -12,9 +12,8 @@ export default function ShopifyInventoryTable({
   products = [],
   masterProducts = [],
   locations = {},
-  onUpdate,     // ✅ Redux Action from Parent
-  onUpdateSku,  // ✅ Redux Action from Parent
-  onSync,       // ✅ Redux Action from Parent
+  onUpdate,
+  onUpdateSku,
   onLink,
   refresh,
 }) {
@@ -26,7 +25,7 @@ export default function ShopifyInventoryTable({
     );
   }
 
-  // Helper for unlinking (can remain local or move to Redux later)
+  /* ✅ UNLINK HELPER */
   async function unlinkShopify(masterId) {
     if (!masterId) return;
     try {
@@ -74,11 +73,7 @@ export default function ShopifyInventoryTable({
                     locationName={locationName}
                     master={master}
                     onUpdate={onUpdate}
-                    onUpdateSku={onUpdateSku} /* ✅ Uses Prop (Redux) */
-                    onSync={() => {
-                      if (!master) return toast.error("No master product linked");
-                      return onSync(master);
-                    }}
+                    onUpdateSku={onUpdateSku}
                     onLink={() => onLink(item)}
                     onUnlink={() => {
                       if (!master?._id) return;
@@ -108,8 +103,7 @@ export default function ShopifyInventoryTable({
                 locationName={locationName}
                 master={master}
                 onUpdate={onUpdate}
-                onUpdateSku={onUpdateSku} /* ✅ Uses Prop (Redux) */
-                onSync={onSync}
+                onUpdateSku={onUpdateSku}
                 onLink={onLink}
                 onUnlink={unlinkShopify}
               />
@@ -122,20 +116,18 @@ export default function ShopifyInventoryTable({
 }
 
 /* 📱 MOBILE CARD COMPONENT */
-function MobileInventoryCard({ product, level, locationName, master, onUpdate, onUpdateSku, onSync, onLink, onUnlink }) {
+function MobileInventoryCard({ product, level, locationName, master, onUpdate, onUpdateSku, onLink, onUnlink }) {
   const [qty, setQty] = useState(level.available);
   
-  // ✅ SKU Edit State
+  // SKU Edit State
   const [sku, setSku] = useState(product.sku || ""); 
   const [isEditingSku, setIsEditingSku] = useState(false);
   const [updatingSku, setUpdatingSku] = useState(false);
 
-  // Other Loading States
   const [updating, setUpdating] = useState(false);
-  const [syncing, setSyncing] = useState(false);
   const [unlinking, setUnlinking] = useState(false);
 
-  const isBusy = updating || syncing || unlinking || updatingSku;
+  const isBusy = updating || unlinking || updatingSku;
 
   async function handleUpdate() {
     if (qty === "" || isNaN(qty)) return toast.error("Enter a valid quantity");
@@ -149,35 +141,17 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
     } finally { setUpdating(false); }
   }
 
-  // ✅ SKU Save Handler (Uses Redux via Prop)
   async function handleSkuSave() {
     if (!sku || sku.trim() === "") return toast.error("SKU cannot be empty");
     try {
       setUpdatingSku(true);
-      
-      // Call Redux Action passed from Parent
       await onUpdateSku(product.inventory_item_id, sku);
-      
-      toast.success("SKU Updated");
-      setIsEditingSku(false);
+      setIsEditingSku(false); 
     } catch(err) {
-      console.error(err);
-      toast.error("Failed to update SKU");
+      // Error logged in parent
     } finally { 
       setUpdatingSku(false); 
     }
-  }
-
-  async function handleSync() {
-    if (!master) return toast.error("No master product linked");
-    try {
-      setSyncing(true);
-      await toast.promise(onSync(master), {
-        loading: "Syncing...",
-        success: "Synced",
-        error: "Failed",
-      });
-    } finally { setSyncing(false); }
   }
 
   async function handleUnlink() {
@@ -207,7 +181,7 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
       <div className="mb-4">
         <h3 className="text-slate-100 font-semibold text-base leading-snug mb-2">{product.title}</h3>
         
-        {/* ✅ SKU Section with Edit Mode */}
+        {/* SKU Section with Edit Mode */}
         <div className="flex items-center justify-between h-8">
           {isEditingSku ? (
              <div className="flex items-center gap-2 w-full animate-in fade-in duration-200">
@@ -218,17 +192,10 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
                  placeholder="Enter SKU"
                  autoFocus
                />
-               <button 
-                 onClick={handleSkuSave} 
-                 disabled={updatingSku}
-                 className="bg-emerald-600 p-1.5 rounded text-white hover:bg-emerald-500 disabled:opacity-50"
-               >
+               <button onClick={handleSkuSave} disabled={updatingSku} className="bg-emerald-600 p-1.5 rounded text-white hover:bg-emerald-500 disabled:opacity-50">
                  {updatingSku ? <Loader2 size={12} className="animate-spin"/> : <Check size={12} />}
                </button>
-               <button 
-                 onClick={() => { setIsEditingSku(false); setSku(product.sku || ""); }} 
-                 className="bg-slate-700 p-1.5 rounded text-white hover:bg-slate-600"
-               >
+               <button onClick={() => { setIsEditingSku(false); setSku(product.sku || ""); }} className="bg-slate-700 p-1.5 rounded text-white hover:bg-slate-600">
                  <XIcon size={12} />
                </button>
              </div>
@@ -237,11 +204,7 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
               <span className="bg-slate-800 text-slate-400 text-[10px] px-1.5 py-0.5 rounded border border-slate-700 font-mono whitespace-nowrap">
                 {product.sku || "NO SKU"}
               </span>
-              <button 
-                onClick={() => setIsEditingSku(true)} 
-                className="text-slate-500 hover:text-cyan-400 transition-colors"
-                title="Edit SKU"
-              >
+              <button onClick={() => setIsEditingSku(true)} className="text-slate-500 hover:text-cyan-400 transition-colors" title="Edit SKU">
                 <Edit2 size={12} />
               </button>
             </div>
@@ -254,13 +217,12 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-4 p-3 bg-slate-800/50 rounded-lg border border-slate-800">
         <div>
           <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Current Stock</label>
           <div className="text-xl font-bold text-cyan-400">{level.available}</div>
         </div>
-        
         <div>
            <label className="text-[10px] uppercase text-slate-500 font-bold tracking-wider">Linked Master</label>
            {master ? (
@@ -275,10 +237,8 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
         </div>
       </div>
 
-      {/* Actions Area */}
+      {/* Actions (Sync Removed) */}
       <div className="flex flex-col gap-3">
-        
-        {/* Update Input & Button */}
         <div className="flex gap-2">
           <input
             type="number"
@@ -287,47 +247,22 @@ function MobileInventoryCard({ product, level, locationName, master, onUpdate, o
             className="w-20 bg-slate-950 border border-slate-700 rounded px-2 text-center text-sm focus:border-cyan-500 outline-none"
             placeholder="Qty"
           />
-          <button
-            onClick={handleUpdate}
-            disabled={updating}
-            className="flex-1 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white text-sm font-medium py-2 rounded transition-colors flex items-center justify-center gap-2"
-          >
+          <button onClick={handleUpdate} disabled={updating} className="flex-1 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white text-sm font-medium py-2 rounded transition-colors flex items-center justify-center gap-2">
             {updating ? <Loader2 size={16} className="animate-spin" /> : "Update Qty"}
           </button>
         </div>
 
-        {/* Master Actions */}
         <div className="flex gap-2">
           {master ? (
-            <>
-              <button
-                onClick={handleSync}
-                disabled={isBusy}
-                className="flex-1 bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-indigo-400 text-xs py-2 rounded flex items-center justify-center gap-1 transition-colors"
-              >
-                {syncing ? <Loader2 size={14} className="animate-spin" /> : <ArrowUpDown size={14} />}
-                Sync
-              </button>
-              <button
-                onClick={handleUnlink}
-                disabled={isBusy}
-                className="flex-1 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs py-2 rounded flex items-center justify-center gap-1 transition-colors"
-              >
-                 <Unlink size={14} />
-                 {unlinking ? "..." : "Unlink"}
-              </button>
-            </>
+            <button onClick={handleUnlink} disabled={isBusy} className="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 text-xs py-2 rounded flex items-center justify-center gap-1 transition-colors">
+               <Unlink size={14} /> {unlinking ? "..." : "Unlink"}
+            </button>
           ) : (
-            <button
-              onClick={() => onLink(product)}
-              disabled={isBusy}
-              className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs py-2 rounded flex items-center justify-center gap-2 transition-colors"
-            >
+            <button onClick={() => onLink(product)} disabled={isBusy} className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs py-2 rounded flex items-center justify-center gap-2 transition-colors">
               <Link2 size={14} /> Link to Master Product
             </button>
           )}
         </div>
-
       </div>
     </div>
   );
